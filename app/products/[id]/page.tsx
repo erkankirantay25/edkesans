@@ -3,7 +3,7 @@
 import { doc, getDoc } from "firebase/firestore";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { db } from "@/lib/firebase";
+import { db } from '@/lib/firebase';
 
 // Veri çekme fonksiyonu
 async function getProductById(id: string) { // <-- Tip kaldırdım
@@ -14,7 +14,7 @@ async function getProductById(id: string) { // <-- Tip kaldırdım
 
 // Ana sayfa component'i
 export default async function ProductDetailPage({ params }: any) { // <-- Tipi 'any' yaptım
-  const product = await getProductById(params.id);
+const product: any = await getProductById(params.id);
 
   if (!product) {
     notFound();
