@@ -2,8 +2,8 @@
 
 import { doc, getDoc } from "firebase/firestore";
 import Image from "next/image";
-import { db } from "@/lib/firebase"; // Firebase ayar dosyamızın doğru yolu
-import { Product } from "@/types"; // Ortak Product tipimiz
+import { db } from '@/lib/firebase'; // Firebase ayar dosyamızın doğru yolu
+import { Product } from '@/types'; // Ortak Product tipimiz
 
 // Veri çekme fonksiyonu
 async function getProductById(id: string): Promise<Product | null> {
