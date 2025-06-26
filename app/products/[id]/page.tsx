@@ -2,59 +2,54 @@
 
 import { doc, getDoc } from "firebase/firestore";
 import Image from "next/image";
-import { notFound } from "next/navigation"; // notFound fonksiyonunu import et
+import { notFound } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { Product } from "@/types";
 
-// Sayfa component'i props'larının tipini doğrudan burada tanımlayalım
-// Bu, Next.js'in beklediği en temel yapıdır.
+// Bu, Next.js'in beklediği en doğru ve basit tip tanımıdır.
 type Props = {
   params: {
     id: string;
   };
 };
 
-// Veri çekme fonksiyonu - Değişiklik yok
+// SEO için sayfa başlığını dinamik oluşturan fonksiyon
+export async function generateMetadata({ params }: Props) {
+  const product = await getProductById(params.id);
+  
+  if (!product) {
+    return {
+      title: "Ürün Bulunamadı",
+    };
+  }
+  
+  return {
+    title: `${product.name} | Esanscim`,
+    description: product.description,
+  };
+}
+
+// Veri çekme fonksiyonu
 async function getProductById(id: string): Promise<Product | null> {
   try {
     const productRef = doc(db, "products", id);
     const docSnap = await getDoc(productRef);
-
-    if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as Product;
-    } else {
-      return null;
-    }
+    return docSnap.exists() ? ({ id: docSnap.id, ...docSnap.data() } as Product) : null;
   } catch (error) {
     console.error("Error getting document:", error);
     return null;
   }
 }
 
-// SEO ve sayfa başlığı için metadata fonksiyonu (Önerilen)
-export async function generateMetadata({ params }: Props) {
-  const product = await getProductById(params.id);
-  if (!product) {
-    return {
-      title: 'Ürün Bulunamadı'
-    }
-  }
-  return {
-    title: `${product.name} | Esanscim`,
-    description: product.description
-  }
-}
-
-// Component'i async yaparak sunucu tarafında veri çekmesini sağlıyoruz
+// Ana sayfa component'i
 export default async function ProductDetailPage({ params }: Props) {
   const product = await getProductById(params.id);
 
-  // Ürün bulunamazsa, Next.js'in kendi 404 sayfasını gösterelim
+  // Ürün bulunamazsa, standart 404 sayfasını göster (en doğru yöntem)
   if (!product) {
     notFound();
   }
 
-  // Ürün bulunduysa, detaylarını gösterelim
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -63,9 +58,10 @@ export default async function ProductDetailPage({ params }: Props) {
           <Image
             src={product.imageUrl || '/placeholder.png'}
             alt={product.name}
-            fill // layout="fill" yerine fill kullanın
-            style={{objectFit:"cover"}} // objectFit="cover" yerine bu şekilde kullanın
+            fill
+            style={{ objectFit: "cover" }}
             className="transition-transform duration-300 hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
 
