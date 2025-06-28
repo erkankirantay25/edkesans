@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "esanscim"
+  },
+  "hosting": {
+    "predeploy": [
+    ]
+  },
+  "functions": {
+    "predeploy": [
+      
+    ]
+  }
+}
