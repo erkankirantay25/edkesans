@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Yap - Esanscim</title>
+    <!-- TailwindCSS'i CDN ile projemize dahil ediyoruz. Kurulum gerekmez. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Floating label için küçük bir ek stil */
+        input:placeholder-shown + label {
+            transform: translateY(0);
+            opacity: 0.5;
+        }
+        input:focus + label, input:not(:placeholder-shown) + label {
+            transform: translateY(-2.25rem) scale(0.8);
+            opacity: 1;
+            background-color: white;
+            padding: 0 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <div class="flex flex-col items-center justify-center min-h-screen px-4">
+      <div class="w-full max-w-sm mx-auto">
+        
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 tracking-wider">ESANSCIM</h1>
+            <p class="text-sm text-gray-500 mt-1">Giriş Yap</p>
+        </div>
+
+        <div class="bg-white p-8 rounded-2xl shadow-lg">
+          <form id="login-form" class="space-y-6">
+            <div class="relative">
+              <input id="email" type="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 placeholder-transparent" placeholder="E-posta Adresi" />
+              <label for="email" class="absolute left-4 top-0 text-gray-600 text-base transition-all pointer-events-none">E-posta Adresi</label>
+            </div>
+
+            <div class="relative">
+              <input id="password" type="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 placeholder-transparent" placeholder="Şifre" />
+              <label for="password" class="absolute left-4 top-0 text-gray-600 text-base transition-all pointer-events-none">Şifre</label>
+            </div>
+            
+            <p id="error-message" class="text-red-500 text-xs text-center h-4"></p>
+
+            <div>
+              <button id="submit-button" type="submit" class="w-full py-3 px-4 font-bold text-white bg-gray-800 rounded-lg hover:bg-gray-700 transition-all duration-300 disabled:bg-gray-400">
+                Giriş Yap
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="text-center mt-6">
+          <p class="text-sm text-gray-600">
+            Hesabın yok mu? <a href="register.html" class="font-semibold text-indigo-600 hover:underline">Hemen Hesap Oluştur</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Firebase SDK'larını sayfamıza dahil ediyoruz -->
+    <!-- Bu anahtarları daha sonra kendi Firebase proje anahtarlarınla değiştireceksin -->
+    <script type="module">
+        // Firebase SDK'larını import et
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        // Senin Firebase Proje Ayarların (Bu kısımları kendi projenin bilgileriyle doldurmalısın)
+        const firebaseConfig = {
+            apiKey: "SENIN_API_KEY",
+            authDomain: "SENIN_AUTH_DOMAIN",
+            projectId: "SENIN_PROJECT_ID",
+            storageBucket: "SENIN_STORAGE_BUCKET",
+            messagingSenderId: "SENIN_MESSAGING_SENDER_ID",
+            appId: "SENIN_APP_ID"
+        };
+
+        // Firebase'i başlat
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // HTML elementlerini seç
+        const loginForm = document.getElementById('login-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const errorMessage = document.getElementById('error-message');
+        const submitButton = document.getElementById('submit-button');
+
+        // Form gönderildiğinde çalışacak fonksiyon
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Sayfanın yenilenmesini engelle
+            submitButton.disabled = true;
+            submitButton.innerText = 'Giriş Yapılıyor...';
+            errorMessage.innerText = '';
+
+            try {
+                const userEmail = emailInput.value;
+                const userPassword = passwordInput.value;
+
+                await signInWithEmailAndPassword(auth, userEmail, userPassword);
+                
+                // Giriş başarılı, kullanıcıyı profil sayfasına yönlendir
+                alert('Giriş başarılı! Profil sayfasına yönlendiriliyorsunuz...');
+                window.location.href = 'profile.html'; // Henüz var olmayan profil sayfası
+
+            } catch (error) {
+                errorMessage.innerText = 'E-posta veya şifre hatalı. Lütfen kontrol edip tekrar deneyin.';
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerText = 'Giriş Yap';
+            }
+        });
+    </script>
+</body>
+</html>
