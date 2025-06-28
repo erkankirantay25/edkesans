@@ -6,7 +6,6 @@
     <title>Giriş & Kayıt - Esanscim</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Floating label için küçük bir ek stil */
         .form-input:placeholder-shown + .form-label { transform: translateY(0); opacity: 0.5; }
         .form-input:focus + .form-label, .form-input:not(:placeholder-shown) + .form-label {
             transform: translateY(-2.25rem) scale(0.8);
@@ -14,7 +13,6 @@
             background-color: white;
             padding: 0 0.25rem;
         }
-        /* Formlar arası geçiş için animasyon */
         .form-container { transition: all 0.3s ease-in-out; }
     </style>
 </head>
@@ -30,7 +28,6 @@
 
         <div class="bg-white p-8 rounded-2xl shadow-lg">
             
-            <!-- GİRİŞ YAP FORMU -->
             <form id="login-form" class="space-y-6 form-container">
                 <div class="relative">
                     <input id="login-email" type="email" required class="form-input w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-indigo-500 placeholder-transparent" placeholder="E-posta" />
@@ -45,7 +42,6 @@
                 </div>
             </form>
 
-            <!-- KAYIT OL FORMU (Başlangıçta gizli) -->
             <form id="register-form" class="space-y-5 form-container hidden">
                 <div class="relative">
                     <input id="register-name" type="text" required class="form-input w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-indigo-500 placeholder-transparent" placeholder="İsim Soyisim" />
@@ -71,7 +67,6 @@
             <p id="error-message" class="text-red-500 text-xs text-center h-4 mt-4"></p>
         </div>
         
-        <!-- Form Değiştirme Linki -->
         <div id="switch-container" class="text-center mt-6">
             <p class="text-sm text-gray-600">
                 Hesabın yok mu? 
@@ -82,111 +77,109 @@
       </div>
     </div>
 
-    <!-- Firebase ve Sayfa Mantığı -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        
-        const firebaseConfig = { /* Kendi Firebase config bilgilerin buraya */ };
-        
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+ // <script type="module"> İÇİNE YAPIŞTIRILACAK DÜZELTİLMİŞ KOD
 
-        // --- HTML Elementleri ---
-        const pageSubtitle = document.getElementById('page-subtitle');
-        const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
-        const errorMessage = document.getElementById('error-message');
-        const switchToRegisterBtn = document.getElementById('switch-to-register');
-        const switchContainer = document.getElementById('switch-container');
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    
+    const firebaseConfig = { /* Kendi Firebase config bilgilerin buraya */ };
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-        // --- Form Değiştirme Mantığı ---
-        function showRegisterForm() {
-            pageSubtitle.innerText = 'Hesap Oluştur';
-            loginForm.classList.add('hidden');
-            registerForm.classList.remove('hidden');
-            switchContainer.innerHTML = `<p class="text-sm text-gray-600">Zaten bir hesabın var mı? <button id="switch-to-login" class="font-semibold text-indigo-600 hover:underline">Giriş Yap</button></p>`;
-            document.getElementById('switch-to-login').addEventListener('click', showLoginForm);
+    const pageSubtitle = document.getElementById('page-subtitle');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const errorMessage = document.getElementById('error-message');
+    const switchContainer = document.getElementById('switch-container'); 
+
+    function switchToRegister() {
+        pageSubtitle.innerText = 'Hesap Oluştur';
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+        switchContainer.innerHTML = `<p class="text-sm text-gray-600">Zaten bir hesabın var mı? <button id="switch-to-login" class="font-semibold text-indigo-600 hover:underline">Giriş Yap</button></p>`;
+
+        document.getElementById('switch-to-login').addEventListener('click', switchToLogin);
+    }
+
+    function switchToLogin() {
+        pageSubtitle.innerText = 'Giriş Yap';
+        registerForm.classList.add('hidden');
+        loginForm.classList.remove('hidden');
+        switchContainer.innerHTML = `<p class="text-sm text-gray-600">Hesabın yok mu? <button id="switch-to-register" class="font-semibold text-indigo-600 hover:underline">Hemen Hesap Oluştur</button></p>`;
+
+        document.getElementById('switch-to-register').addEventListener('click', switchToRegister);
+    }
+    
+    document.getElementById('switch-to-register').addEventListener('click', switchToRegister);
+
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = loginForm.querySelector('#login-email').value;
+        const password = loginForm.querySelector('#login-password').value;
+        const button = loginForm.querySelector('button');
+        
+        button.disabled = true;
+        button.innerText = 'Giriş Yapılıyor...';
+        errorMessage.innerText = '';
+        
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            window.location.href = 'index.html';
+        } catch (error) {
+            errorMessage.innerText = 'E-posta veya şifre hatalı.';
+            button.disabled = false;
+            button.innerText = 'Giriş Yap';
         }
+    });
 
-        function showLoginForm() {
-            pageSubtitle.innerText = 'Giriş Yap';
-            registerForm.classList.add('hidden');
-            loginForm.classList.remove('hidden');
-            switchContainer.innerHTML = `<p class="text-sm text-gray-600">Hesabın yok mu? <button id="switch-to-register" class="font-semibold text-indigo-600 hover:underline">Hemen Hesap Oluştur</button></p>`;
-            document.getElementById('switch-to-register').addEventListener('click', showRegisterForm);
+    registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = registerForm.querySelector('#register-name').value;
+        const phone = registerForm.querySelector('#register-phone').value;
+        const email = registerForm.querySelector('#register-email').value;
+        const password = registerForm.querySelector('#register-password').value;
+        const button = registerForm.querySelector('button');
+
+        button.disabled = true;
+        button.innerText = 'Hesap Oluşturuluyor...';
+        errorMessage.innerText = '';
+
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            await setDoc(doc(db, "users", user.uid), {
+                uid: user.uid,
+                name: name,
+                phone: phone,
+                email: user.email,
+                createdAt: serverTimestamp(),
+                role: 'user',
+                isBanned: false,
+                isActive: true,
+            });
+
+            await updateProfile(user, { displayName: name });
+            
+            alert('Hesabınız başarıyla oluşturuldu!');
+            window.location.href = 'index.html';
+            
+        } catch (err) {
+            if (err.code === 'auth/email-already-in-use') {
+                errorMessage.innerText = 'Bu e-posta zaten kullanılıyor.';
+            } else if (err.code === 'auth/weak-password') {
+                errorMessage.innerText = 'Şifre en az 6 karakter olmalıdır.';
+            } else {
+                errorMessage.innerText = 'Bir hata oluştu.';
+            }
+            button.disabled = false;
+            button.innerText = 'Hesap Oluştur';
         }
-        
-        switchToRegisterBtn.addEventListener('click', showRegisterForm);
-
-
-        // --- Form İşlemleri ---
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = loginForm.querySelector('#login-email').value;
-            const password = loginForm.querySelector('#login-password').value;
-            const button = loginForm.querySelector('button');
-            
-            button.disabled = true;
-            button.innerText = 'Giriş Yapılıyor...';
-            errorMessage.innerText = '';
-            
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                window.location.href = 'index.html'; // Giriş başarılı, anasayfaya yönlendir
-            } catch (error) {
-                errorMessage.innerText = 'E-posta veya şifre hatalı.';
-                button.disabled = false;
-                button.innerText = 'Giriş Yap';
-            }
-        });
-
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = registerForm.querySelector('#register-name').value;
-            const phone = registerForm.querySelector('#register-phone').value;
-            const email = registerForm.querySelector('#register-email').value;
-            const password = registerForm.querySelector('#register-password').value;
-            const button = registerForm.querySelector('button');
-
-            button.disabled = true;
-            button.innerText = 'Hesap Oluşturuluyor...';
-            errorMessage.innerText = '';
-
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                await setDoc(doc(db, "users", user.uid), {
-                    uid: user.uid,
-                    name: name,
-                    phone: phone,
-                    email: user.email,
-                    createdAt: serverTimestamp(),
-                    role: 'user',
-                    isBanned: false,
-                    isActive: true,
-                });
-
-                await updateProfile(user, { displayName: name });
-                
-                alert('Hesabınız başarıyla oluşturuldu!');
-                window.location.href = 'index.html'; // Kayıt başarılı, anasayfaya yönlendir
-                
-            } catch (err) {
-                if (err.code === 'auth/email-already-in-use') {
-                    errorMessage.innerText = 'Bu e-posta zaten kullanılıyor.';
-                } else if (err.code === 'auth/weak-password') {
-                    errorMessage.innerText = 'Şifre en az 6 karakter olmalıdır.';
-                } else {
-                    errorMessage.innerText = 'Bir hata oluştu.';
-                }
-                button.disabled = false;
-                button.innerText = 'Hesap Oluştur';
-            }
-        });
+    });
     </script>
 </body>
 </html>
