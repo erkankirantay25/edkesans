@@ -17,6 +17,7 @@ export default function RegisterPage() {
   const router = useRouter();
 
   const handleRegister = async (e: React.FormEvent) => {
+    alert("Butona basıldı, fonksiyon çalıştı!");
     e.preventDefault();
     setError(null);
     setIsLoading(true); // <-- YENİ: İşlem başladığında yükleniyor durumunu başlat
