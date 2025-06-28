@@ -1,17 +1,19 @@
 // components/ProductCard.tsx
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { Product } from '@/types'; // Projemizin ortak Product tipini kullanıyoruz
 
-// Bu, bileşenimizin hangi bilgileri alacağını tanımlar (bir nevi sipariş listesi)
-type ProductCardProps = {
-  id: number;
-  imageUrl: string;
-  category: string;
-  name: string;
-  price: number;
-};
+// Artık component'imiz tek bir "product" nesnesi alıyor.
+// Bu, kodu daha temiz ve yönetilebilir yapar.
+interface ProductCardProps {
+  product: Product;
+}
 
-export default function ProductCard({ imageUrl, category, name, price, id }: ProductCardProps) {
+export default function ProductCard({ product }: ProductCardProps) {
+  // Gelen ürün nesnesinden ihtiyacımız olan bilgileri alıyoruz.
+  const { id, imageUrl, category, name, price } = product;
+
   return (
     <Link href={`/products/${id}`} className="group block">
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300">
@@ -20,9 +22,10 @@ export default function ProductCard({ imageUrl, category, name, price, id }: Pro
           <Image
             src={imageUrl}
             alt={name}
-            fill // Bu, resmi kapsayıcısını dolduracak şekilde ayarlar
-            style={{ objectFit: 'cover' }} // Resmin orantısını bozmadan doldurmasını sağlar
+            fill
+            style={{ objectFit: 'cover' }}
             className="group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>
         
@@ -35,7 +38,6 @@ export default function ProductCard({ imageUrl, category, name, price, id }: Pro
           <p className="text-xl font-bold text-gray-900 mt-2">
             {price} TL
           </p>
-          {/* Sepete ekle butonu daha sonra buraya gelebilir */}
         </div>
       </div>
     </Link>
