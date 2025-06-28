@@ -6,8 +6,7 @@
     <title>Esanslar - Esanscim</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Hamburger menü için geçiş animasyonu */
-        #mobile-menu { transition: max-height 0.3s ease-out; }
+        #mobile-menu { transition: max-height 0.3s ease-in-out; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -17,7 +16,7 @@
         <nav class="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
             <a href="index.html" class="text-2xl font-bold text-gray-800 tracking-wider">ESANSCIM</a>
             
-            <!-- Masaüstü Menüsü -->
+            <!-- Masaüstü Menüsü (md ve üzeri ekranlarda görünür) -->
             <div class="hidden md:flex items-center space-x-6">
                 <a href="index.html" class="text-gray-600 hover:text-indigo-600">Ana Sayfa</a>
                 <a href="urunler.html" class="font-semibold text-indigo-600">Esanslar</a>
@@ -25,10 +24,10 @@
                 <a href="login.html" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md hover:bg-gray-700">Giriş Yap</a>
             </div>
 
-            <!-- Mobil Menü Butonu -->
+            <!-- Mobil Menü Butonu (Sadece md altı ekranlarda görünür) -->
             <div class="md:hidden">
                 <button id="menu-button" class="text-gray-800 focus:outline-none">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
                 </button>
             </div>
         </nav>
@@ -44,29 +43,26 @@
     <!-- ANA İÇERİK BÖLÜMÜ -->
     <main class="container mx-auto px-4 sm:px-6 py-8">
         
-        <!-- Kategori ve Filtre Bölümü -->
-        <div class="mb-8 p-4 bg-white rounded-lg shadow">
-             <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <!-- KATEGORİ BUTONLARI -->
-                <div id="category-filters" class="flex flex-wrap justify-center sm:justify-start gap-2">
-                    <!-- JS ile dolacak -->
-                </div>
-                <!-- FİLTRELEME SEÇENEĞİ -->
-                <div class="flex-shrink-0">
-                    <select id="sort-filter" class="w-full sm:w-auto px-4 py-2 border rounded-md bg-white text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        <option value="default">Sırala</option>
-                        <option value="popular">Popüler Esanslar</option>
-                        <option value="ending_soon">Temin Süresi Yaklaşanlar</option>
-                    </select>
-                </div>
+        <!-- KATEGORİ SEÇİMİ -->
+        <div class="mb-4">
+            <div id="category-tabs" class="flex border-b">
+                <!-- Kategori sekmeleri JS ile dolacak -->
             </div>
         </div>
 
-        <!-- Ürün Izgarası -->
-        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <!-- Ürün kartları JavaScript ile buraya eklenecek -->
+        <!-- FİLTRELEME BÖLÜMÜ -->
+        <div class="flex justify-end mb-6">
+             <select id="sort-filter" class="px-4 py-2 border rounded-md bg-white text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                <option value="default">Filtrele</option>
+                <option value="popular">Popüler Esanslar</option>
+                <option value="ending_soon">Temin Süresi Yaklaşanlar</option>
+            </select>
         </div>
 
+        <!-- Ürün Izgarası -->
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <!-- Ürün kartları JavaScript ile buraya eklenecek -->
+        </div>
     </main>
 
     <!-- JAVASCRIPT BÖLÜMÜ -->
@@ -74,113 +70,102 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // --- Firebase Kurulumu ---
         const firebaseConfig = { /* SENIN_CONFIG_BILGILERIN_BURAYA */ };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- Global Değişkenler ---
         let allProducts = [];
         const CATEGORIES = ["Tümü", "Kadın", "Erkek", "Unisex"];
-
-        // --- HTML Elementleri ---
+        
         const menuButton = document.getElementById('menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
-        const categoryFiltersEl = document.getElementById('category-filters');
+        const categoryTabsEl = document.getElementById('category-tabs');
         const sortFilterEl = document.getElementById('sort-filter');
         const productGridEl = document.getElementById('product-grid');
 
-        // --- Mobil Menü Fonksiyonu ---
+        // Mobil Menü Mantığı
         menuButton.addEventListener('click', () => {
             mobileMenu.classList.toggle('max-h-0');
-            mobileMenu.classList.toggle('max-h-96'); // Yeterince büyük bir değer
+            mobileMenu.classList.toggle('max-h-96');
         });
 
-        // --- Ana Fonksiyon: Sayfa Yüklendiğinde Çalışır ---
+        // Ana Başlatıcı Fonksiyon
         async function initializePage() {
-            productGridEl.innerHTML = '<p class="col-span-full text-center">Esanslar yükleniyor...</p>';
-            
+            productGridEl.innerHTML = `<p class="col-span-full text-center py-10">Esanslar yükleniyor...</p>`;
             const productsSnapshot = await getDocs(collection(db, "products"));
             allProducts = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            renderCategories();
-            renderProducts(); // İlk render
+            renderCategoryTabs();
+            renderProducts();
         }
 
-        // --- Kategori Butonlarını Oluştur ---
-        function renderCategories() {
-            categoryFiltersEl.innerHTML = CATEGORIES.map((cat, index) => `
-                <button class="category-btn px-4 py-1.5 text-sm font-semibold rounded-full transition ${index === 0 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}" data-category="${cat}">
+        // Kategori Sekmelerini Oluştur
+        function renderCategoryTabs() {
+            categoryTabsEl.innerHTML = CATEGORIES.map((cat, index) => `
+                <button class="category-tab py-2 px-4 -mb-px text-sm font-semibold border-b-2 ${index === 0 ? 'text-indigo-600 border-indigo-600' : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'}" data-category="${cat}">
                     ${cat}
                 </button>
             `).join('');
 
-            // Butonlara tıklama olayı ekle
-            document.querySelectorAll('.category-btn').forEach(btn => {
+            document.querySelectorAll('.category-tab').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    document.querySelector('.category-btn.bg-indigo-600')?.classList.replace('bg-indigo-600', 'bg-gray-200');
-                    document.querySelector('.category-btn.text-white')?.classList.replace('text-white', 'text-gray-700');
-                    e.currentTarget.classList.replace('bg-gray-200', 'bg-indigo-600');
-                    e.currentTarget.classList.replace('text-gray-700', 'text-white');
+                    document.querySelector('.category-tab.text-indigo-600')?.classList.replace('text-indigo-600', 'text-gray-500');
+                    document.querySelector('.category-tab.border-indigo-600')?.classList.replace('border-indigo-600', 'border-transparent');
+                    e.currentTarget.classList.add('text-indigo-600', 'border-indigo-600');
+                    e.currentTarget.classList.remove('text-gray-500', 'border-transparent');
                     renderProducts();
                 });
             });
         }
 
-        // --- Ürünleri Filtreleyip Sıralayıp Ekrana Basan Fonksiyon ---
+        // Ürünleri Ekrana Basan Ana Fonksiyon
         function renderProducts() {
             let productsToDisplay = [...allProducts];
+            const activeCategory = document.querySelector('.category-tab.text-indigo-600').dataset.category;
+            const sortOption = sortFilterEl.value;
 
             // 1. Kategoriye Göre Filtrele
-            const activeCategory = document.querySelector('.category-btn.bg-indigo-600').dataset.category;
             if (activeCategory !== 'Tümü') {
                 productsToDisplay = productsToDisplay.filter(p => p.category === activeCategory);
             }
 
             // 2. Özel Filtreye Göre Sırala
-            const sortOption = sortFilterEl.value;
             if (sortOption === 'popular') {
-                // En çok talep edileni (totalDemand) başa al
                 productsToDisplay.sort((a, b) => (b.totalDemand || 0) - (a.totalDemand || 0));
             } else if (sortOption === 'ending_soon') {
-                // Kotayı doldurmaya en yakın olanı başa al (kota - talep farkı en az olan)
                 productsToDisplay.sort((a, b) => {
-                    const quotaA = a.quota || 500; // Varsayılan kota 500gr
-                    const quotaB = b.quota || 500;
-                    const remainingA = quotaA - (a.totalDemand || 0);
-                    const remainingB = quotaB - (b.totalDemand || 0);
+                    const remainingA = (a.quota || 500) - (a.totalDemand || 0);
+                    const remainingB = (b.quota || 500) - (b.totalDemand || 0);
                     return remainingA - remainingB;
                 });
             }
 
-            // 3. HTML Oluştur ve Ekrana Bas
+            // 3. HTML Oluştur
             if (productsToDisplay.length === 0) {
-                productGridEl.innerHTML = '<p class="col-span-full text-center py-10 text-gray-500">Bu kriterlere uygun esans bulunamadı.</p>';
+                productGridEl.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500">Bu kategoride gösterilecek esans bulunamadı.</p>`;
                 return;
             }
 
             productGridEl.innerHTML = productsToDisplay.map(product => {
-                const quota = product.quota || 500; // Her ürünün kendi kotası olabilir, yoksa 500gr varsay
+                const quota = product.quota || 500;
                 const totalDemand = product.totalDemand || 0;
                 const percentage = Math.min((totalDemand / quota) * 100, 100);
 
                 return `
-                <a href="urun-detay.html?id=${product.id}" class="group block bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-all duration-300">
+                <a href="urun-detay.html?id=${product.id}" class="group block bg-white rounded-xl shadow-md overflow-hidden transform hover:-translate-y-2 transition-all duration-300">
                     <div class="relative w-full h-56">
-                        <img src="${product.imageUrl}" alt="${product.name}" class="w-full h-full object-cover"/>
+                        <img src="${product.imageUrl || 'https://via.placeholder.com/400'}" alt="${product.name}" class="w-full h-full object-cover"/>
                     </div>
-                    <div class="p-4">
-                        <h3 class="text-lg font-bold text-gray-900 truncate">${product.name}</h3>
-                        <p class="text-sm text-gray-500">${product.category}</p>
+                    <div class="p-5">
+                        <p class="text-xs font-semibold text-indigo-500 uppercase">${product.category}</p>
+                        <h3 class="text-lg font-bold text-gray-800 truncate mt-1">${product.name}</h3>
                         
-                        <!-- İlerleme Çubuğu -->
                         <div class="mt-4">
-                            <div class="flex justify-between text-xs font-semibold text-gray-600 mb-1">
-                                <span>${totalDemand}gr</span>
-                                <span>${quota}gr</span>
+                            <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                <span>${totalDemand}gr toplandı</span>
+                                <span>Hedef: ${quota}gr</span>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                <div class="bg-indigo-600 h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" style="width: ${percentage}%"></div>
                             </div>
                         </div>
                     </div>
@@ -189,10 +174,8 @@
             }).join('');
         }
         
-        // --- Olay Dinleyicileri ---
         sortFilterEl.addEventListener('change', renderProducts);
         
-        // --- Sayfayı Başlat ---
         initializePage();
     </script>
 </body>
