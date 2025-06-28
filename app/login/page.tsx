@@ -1,15 +1,50 @@
 // app/login/page.tsx
 
+'use client'; // Bu sayfa interaktif olacak (form girişi)
+
+import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault(); // Sayfanın yeniden yüklenmesini engelle
+    setError(null);
+
+    try {
+      // Firebase'in giriş yapma fonksiyonunu kullan
+      await signInWithEmailAndPassword(auth, email, password);
+      
+      // Giriş başarılı! Kullanıcıyı profil sayfasına yönlendir.
+      // İsteğiniz üzerine bu satırı güncelledik.
+      router.push('/profile');
+
+    } catch (err: any) {
+      console.error("Giriş sırasında hata:", err.code);
+      // Kullanıcıya daha anlaşılır hata mesajları göster
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setError('E-posta veya şifre hatalı.');
+      } else {
+        setError('Giriş sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+      }
+    }
+  };
+
   return (
-    <div className="flex justify-center items-center py-10">
+    <div className="flex justify-center items-center py-10 min-h-screen bg-gray-50">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center text-gray-900">
           Giriş Yap
         </h1>
-        <form className="space-y-6">
+        {/* Formun 'onSubmit' olayını handleLogin fonksiyonuna bağlıyoruz */}
+        <form onSubmit={handleLogin} className="space-y-6">
           {/* E-posta Alanı */}
           <div>
             <label 
@@ -23,6 +58,8 @@ export default function LoginPage() {
               name="email"
               type="email"
               required
+              value={email} // State'e bağladık
+              onChange={(e) => setEmail(e.target.value)} // Değişiklikleri state'e yansıt
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
@@ -40,9 +77,14 @@ export default function LoginPage() {
               name="password"
               type="password"
               required
+              value={password} // State'e bağladık
+              onChange={(e) => setPassword(e.target.value)} // Değişiklikleri state'e yansıt
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
+
+          {/* Hata Mesajı Alanı */}
+          {error && <p className="text-sm text-center text-red-500">{error}</p>}
 
           {/* Buton */}
           <div>
