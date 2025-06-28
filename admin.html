@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Paneli - Esanscim</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Excel okumak için SheetJS kütüphanesini dahil ediyoruz -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+</head>
+<body class="bg-gray-100">
+
+    <div id="loading-state" class="text-center p-20">Yönetici yetkisi kontrol ediliyor...</div>
+
+    <!-- Admin içeriği, yetki kontrolünden sonra görünecek -->
+    <div id="admin-content" class="hidden container mx-auto px-6 py-8">
+        <h1 class="text-3xl font-bold mb-6">Yönetici Paneli</h1>
+
+        <!-- Ürün Yönetimi Bölümü -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-2xl font-bold mb-4">Ürün Yönetimi</h2>
+            
+            <!-- Excel Yükleme -->
+            <div class="border p-4 rounded-md mb-6">
+                <h3 class="font-semibold text-lg mb-2">Excel ile Toplu Ürün Yükle</h3>
+                <p class="text-sm text-gray-600 mb-2">Format: name, price, category, description, imageUrl</p>
+                <input type="file" id="excel-file-input" accept=".xlsx, .xls" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                <button id="upload-excel-button" class="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">Yükle ve Ekle</button>
+            </div>
+
+            <!-- Mevcut Ürünler Listesi -->
+            <div>
+                <h3 class="font-semibold text-lg mb-2">Mevcut Ürünler</h3>
+                <div id="products-table-container" class="overflow-x-auto">
+                    <!-- Ürün tablosu JavaScript ile buraya eklenecek -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Diğer Ayarlar (Site Aç/Kapat, Duyuru vb.) buraya eklenebilir -->
+
+    </div>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, addDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "SENIN_API_KEY",
+            authDomain: "SENIN_AUTH_DOMAIN",
+            projectId: "SENIN_PROJECT_ID",
+            storageBucket: "SENIN_STORAGE_BUCKET",
+            messagingSenderId: "SENIN_MESSAGING_SENDER_ID",
+            appId: "SENIN_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const loadingState = document.getElementById('loading-state');
+        const adminContent = document.getElementById('admin-content');
+        const excelFileInput = document.getElementById('excel-file-input');
+        const uploadExcelButton = document.getElementById('upload-excel-button');
+        const productsTableContainer = document.getElementById('products-table-container');
+
+        // Sayfa yüklenir yüklenmez yetkiyi kontrol et
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userDocRef = doc(db, 'users', user.uid);
+                const userDocSnap = await getDoc(userDocRef);
+                
+                if (userDocSnap.exists() && userDocSnap.data().role === 'admin') {
+                    // KULLANICI ADMİN, SAYFAYI GÖSTER
+                    loadingState.style.display = 'none';
+                    adminContent.style.display = 'block';
+                    loadProducts(); // Mevcut ürünleri yükle
+                } else {
+                    // Admin değil, anasayfaya yönlendir
+                    alert('Bu sayfaya erişim yetkiniz yok.');
+                    window.location.href = 'index.html';
+                }
+            } else {
+                // Giriş yapmamış, login'e yönlendir
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Excel yükleme butonu dinleyicisi
+        uploadExcelButton.addEventListener('click', () => {
+            const file = excelFileInput.files[0];
+            if (!file) {
+                alert('Lütfen bir Excel dosyası seçin.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const json_data = XLSX.utils.sheet_to_json(worksheet);
+
+                if (json_data.length === 0) {
+                    alert('Excel dosyasında veri bulunamadı.');
+                    return;
+                }
+
+                try {
+                    // Toplu yazma işlemi için bir "batch" oluştur
+                    const batch = writeBatch(db);
+                    const productsRef = collection(db, 'products');
+                    
+                    json_data.forEach(product => {
+                        const newProductRef = doc(productsRef); // Yeni ID ile döküman referansı
+                        batch.set(newProductRef, product);
+                    });
+
+                    await batch.commit(); // Tüm ürünleri tek seferde veritabanına yaz
+                    alert(`${json_data.length} ürün başarıyla eklendi!`);
+                    loadProducts(); // Tabloyu yenile
+                } catch (error) {
+                    console.error("Toplu ürün eklenirken hata:", error);
+                    alert("Ürünler eklenirken bir hata oluştu.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Mevcut ürünleri veritabanından çekip tabloya yazdıran fonksiyon
+        async function loadProducts() {
+            const productsSnapshot = await getDocs(collection(db, "products"));
+            let tableHTML = `
+                <table class="min-w-full bg-white">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="px-4 py-2 text-left">İsim</th>
+                            <th class="px-4 py-2 text-left">Fiyat</th>
+                            <th class="px-4 py-2 text-left">Kategori</th>
+                            <th class="px-4 py-2 text-left">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            productsSnapshot.forEach(doc => {
+                const product = doc.data();
+                tableHTML += `
+                    <tr class="border-b">
+                        <td class="px-4 py-2">${product.name}</td>
+                        <td class="px-4 py-2">${product.price} TL</td>
+                        <td class="px-4 py-2">${product.category}</td>
+                        <td class="px-4 py-2">
+                            <button class="text-blue-500 hover:underline">Düzenle</button>
+                            <button class="ml-4 text-red-500 hover:underline">Sil</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tableHTML += `</tbody></table>`;
+            productsTableContainer.innerHTML = tableHTML;
+        }
+
+    </script>
+</body>
+</html>
