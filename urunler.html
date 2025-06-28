@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ürünler - Esanscim</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold text-gray-800">ESANSCIM</a>
+            <div>
+                <!-- Diğer linkler buraya eklenebilir: Profil, Giriş Yap vb. -->
+                <a href="profile.html" class="text-gray-600 hover:text-indigo-600 px-3">Profilim</a>
+                <a href="login.html" class="text-gray-600 hover:text-indigo-600 px-3">Giriş Yap</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Ana İçerik -->
+    <main class="container mx-auto px-6 py-8">
+        <h1 class="text-3xl font-bold mb-6 text-gray-800">Tüm Ürünler</h1>
+
+        <!-- Filtreleme ve Sıralama Barları -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+            <!-- Kategori Filtreleri -->
+            <div id="category-filters" class="flex flex-wrap gap-2">
+                <!-- Kategoriler JavaScript ile buraya eklenecek -->
+            </div>
+            
+            <!-- Sıralama Seçeneği -->
+            <div>
+                <select id="sort-select" class="px-4 py-2 border rounded-md bg-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="default">Varsayılan Sıralama</option>
+                    <option value="price_asc">Fiyata Göre (Artan)</option>
+                    <option value="price_desc">Fiyata Göre (Azalan)</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Ürün Listesi -->
+        <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Ürün kartları JavaScript ile buraya eklenecek -->
+        </div>
+
+    </main>
+
+
+    <!-- Firebase ve Sayfa Mantığı -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "SENIN_API_KEY",
+            authDomain: "SENIN_AUTH_DOMAIN",
+            projectId: "SENIN_PROJECT_ID",
+            storageBucket: "SENIN_STORAGE_BUCKET",
+            messagingSenderId: "SENIN_MESSAGING_SENDER_ID",
+            appId: "SENIN_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // HTML Elementleri
+        const productListEl = document.getElementById('product-list');
+        const categoryFiltersEl = document.getElementById('category-filters');
+        const sortSelectEl = document.getElementById('sort-select');
+
+        let allProducts = []; // Tüm ürünleri saklamak için bir dizi
+        let categories = new Set(); // Tekrarsız kategorileri saklamak için
+
+        // Sayfa yüklendiğinde ürünleri çek
+        window.addEventListener('DOMContentLoaded', async () => {
+            productListEl.innerHTML = '<p>Ürünler yükleniyor...</p>';
+            
+            const productsSnapshot = await getDocs(collection(db, "products"));
+            allProducts = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Kategorileri topla
+            allProducts.forEach(p => categories.add(p.category));
+
+            renderCategories();
+            renderProducts(); // Filtresiz ve sırasız ilk gösterim
+        });
+
+        // Kategori butonlarını oluşturan fonksiyon
+        function renderCategories() {
+            let categoryHTML = '<button class="category-btn active px-3 py-1 bg-indigo-600 text-white rounded-full text-sm" data-category="all">Tümü</button>';
+            categories.forEach(cat => {
+                categoryHTML += `<button class="category-btn px-3 py-1 bg-white border rounded-full text-sm" data-category="${cat}">${cat}</button>`;
+            });
+            categoryFiltersEl.innerHTML = categoryHTML;
+
+            // Kategori butonlarına tıklama olayı ekle
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Aktif stili ayarla
+                    document.querySelector('.category-btn.active').classList.remove('active', 'bg-indigo-600', 'text-white');
+                    e.target.classList.add('active', 'bg-indigo-600', 'text-white');
+                    renderProducts(); // Ürünleri yeniden render et
+                });
+            });
+        }
+
+        // Ürünleri filtreleyip sıralayıp ekrana basan ana fonksiyon
+        function renderProducts() {
+            let filteredProducts = [...allProducts];
+
+            // 1. Filtrele
+            const activeCategory = document.querySelector('.category-btn.active').dataset.category;
+            if (activeCategory !== 'all') {
+                filteredProducts = filteredProducts.filter(p => p.category === activeCategory);
+            }
+
+            // 2. Sırala
+            const sortOption = sortSelectEl.value;
+            if (sortOption === 'price_asc') {
+                filteredProducts.sort((a, b) => a.price - b.price);
+            } else if (sortOption === 'price_desc') {
+                filteredProducts.sort((a, b) => b.price - a.price);
+            }
+            
+            // 3. Ekrana Bas
+            if (filteredProducts.length === 0) {
+                productListEl.innerHTML = '<p class="col-span-full text-center">Bu kriterlere uygun ürün bulunamadı.</p>';
+                return;
+            }
+
+            productListEl.innerHTML = ''; // Listeyi temizle
+            filteredProducts.forEach(product => {
+                const productCardHTML = `
+                    <a href="product-detail.html?id=${product.id}" class="group block">
+                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                            <div class="relative aspect-square w-full">
+                                <img src="${product.imageUrl}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            </div>
+                            <div class="p-4">
+                                <p class="text-sm text-gray-500 mb-1">${product.category}</p>
+                                <h3 class="text-lg font-semibold text-gray-800 truncate">${product.name}</h3>
+                                <p class="text-xl font-bold text-gray-900 mt-2">${product.price} TL</p>
+                            </div>
+                        </div>
+                    </a>
+                `;
+                productListEl.innerHTML += productCardHTML;
+            });
+        }
+
+        // Sıralama seçeneği değiştiğinde ürünleri yeniden render et
+        sortSelectEl.addEventListener('change', renderProducts);
+
+    </script>
+</body>
+</html>
