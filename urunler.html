@@ -3,157 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ürünler - Esanscim</title>
+    <title>Esanslar - Esanscim</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Hamburger menü için geçiş animasyonu */
+        #mobile-menu { transition: max-height 0.3s ease-out; }
+    </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-100">
 
-    <!-- Header -->
-    <header class="bg-white shadow-sm sticky top-0 z-10">
-        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-bold text-gray-800">ESANSCIM</a>
-            <div>
-                <!-- Diğer linkler buraya eklenebilir: Profil, Giriş Yap vb. -->
-                <a href="profile.html" class="text-gray-600 hover:text-indigo-600 px-3">Profilim</a>
-                <a href="login.html" class="text-gray-600 hover:text-indigo-600 px-3">Giriş Yap</a>
+    <!-- HEADER BÖLÜMÜ -->
+    <header class="bg-white shadow-md sticky top-0 z-20">
+        <nav class="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold text-gray-800 tracking-wider">ESANSCIM</a>
+            
+            <!-- Masaüstü Menüsü -->
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="index.html" class="text-gray-600 hover:text-indigo-600">Ana Sayfa</a>
+                <a href="urunler.html" class="font-semibold text-indigo-600">Esanslar</a>
+                <a href="profile.html" class="text-gray-600 hover:text-indigo-600">Profilim</a>
+                <a href="login.html" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md hover:bg-gray-700">Giriş Yap</a>
+            </div>
+
+            <!-- Mobil Menü Butonu -->
+            <div class="md:hidden">
+                <button id="menu-button" class="text-gray-800 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
             </div>
         </nav>
+        <!-- Mobil Açılır Menü -->
+        <div id="mobile-menu" class="max-h-0 overflow-hidden md:hidden">
+            <a href="index.html" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Ana Sayfa</a>
+            <a href="urunler.html" class="block py-2 px-4 text-sm text-indigo-600 font-semibold bg-gray-100">Esanslar</a>
+            <a href="profile.html" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Profilim</a>
+            <a href="login.html" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Giriş Yap</a>
+        </div>
     </header>
 
-    <!-- Ana İçerik -->
-    <main class="container mx-auto px-6 py-8">
-        <h1 class="text-3xl font-bold mb-6 text-gray-800">Tüm Ürünler</h1>
-
-        <!-- Filtreleme ve Sıralama Barları -->
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-            <!-- Kategori Filtreleri -->
-            <div id="category-filters" class="flex flex-wrap gap-2">
-                <!-- Kategoriler JavaScript ile buraya eklenecek -->
-            </div>
-            
-            <!-- Sıralama Seçeneği -->
-            <div>
-                <select id="sort-select" class="px-4 py-2 border rounded-md bg-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="default">Varsayılan Sıralama</option>
-                    <option value="price_asc">Fiyata Göre (Artan)</option>
-                    <option value="price_desc">Fiyata Göre (Azalan)</option>
-                </select>
+    <!-- ANA İÇERİK BÖLÜMÜ -->
+    <main class="container mx-auto px-4 sm:px-6 py-8">
+        
+        <!-- Kategori ve Filtre Bölümü -->
+        <div class="mb-8 p-4 bg-white rounded-lg shadow">
+             <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <!-- KATEGORİ BUTONLARI -->
+                <div id="category-filters" class="flex flex-wrap justify-center sm:justify-start gap-2">
+                    <!-- JS ile dolacak -->
+                </div>
+                <!-- FİLTRELEME SEÇENEĞİ -->
+                <div class="flex-shrink-0">
+                    <select id="sort-filter" class="w-full sm:w-auto px-4 py-2 border rounded-md bg-white text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="default">Sırala</option>
+                        <option value="popular">Popüler Esanslar</option>
+                        <option value="ending_soon">Temin Süresi Yaklaşanlar</option>
+                    </select>
+                </div>
             </div>
         </div>
-        
-        <!-- Ürün Listesi -->
-        <div id="product-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+        <!-- Ürün Izgarası -->
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <!-- Ürün kartları JavaScript ile buraya eklenecek -->
         </div>
 
     </main>
 
-
-    <!-- Firebase ve Sayfa Mantığı -->
+    <!-- JAVASCRIPT BÖLÜMÜ -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "SENIN_API_KEY",
-            authDomain: "SENIN_AUTH_DOMAIN",
-            projectId: "SENIN_PROJECT_ID",
-            storageBucket: "SENIN_STORAGE_BUCKET",
-            messagingSenderId: "SENIN_MESSAGING_SENDER_ID",
-            appId: "SENIN_APP_ID"
-        };
-
+        // --- Firebase Kurulumu ---
+        const firebaseConfig = { /* SENIN_CONFIG_BILGILERIN_BURAYA */ };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // HTML Elementleri
-        const productListEl = document.getElementById('product-list');
+        // --- Global Değişkenler ---
+        let allProducts = [];
+        const CATEGORIES = ["Tümü", "Kadın", "Erkek", "Unisex"];
+
+        // --- HTML Elementleri ---
+        const menuButton = document.getElementById('menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
         const categoryFiltersEl = document.getElementById('category-filters');
-        const sortSelectEl = document.getElementById('sort-select');
+        const sortFilterEl = document.getElementById('sort-filter');
+        const productGridEl = document.getElementById('product-grid');
 
-        let allProducts = []; // Tüm ürünleri saklamak için bir dizi
-        let categories = new Set(); // Tekrarsız kategorileri saklamak için
+        // --- Mobil Menü Fonksiyonu ---
+        menuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('max-h-0');
+            mobileMenu.classList.toggle('max-h-96'); // Yeterince büyük bir değer
+        });
 
-        // Sayfa yüklendiğinde ürünleri çek
-        window.addEventListener('DOMContentLoaded', async () => {
-            productListEl.innerHTML = '<p>Ürünler yükleniyor...</p>';
+        // --- Ana Fonksiyon: Sayfa Yüklendiğinde Çalışır ---
+        async function initializePage() {
+            productGridEl.innerHTML = '<p class="col-span-full text-center">Esanslar yükleniyor...</p>';
             
             const productsSnapshot = await getDocs(collection(db, "products"));
             allProducts = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-            // Kategorileri topla
-            allProducts.forEach(p => categories.add(p.category));
-
+            
             renderCategories();
-            renderProducts(); // Filtresiz ve sırasız ilk gösterim
-        });
+            renderProducts(); // İlk render
+        }
 
-        // Kategori butonlarını oluşturan fonksiyon
+        // --- Kategori Butonlarını Oluştur ---
         function renderCategories() {
-            let categoryHTML = '<button class="category-btn active px-3 py-1 bg-indigo-600 text-white rounded-full text-sm" data-category="all">Tümü</button>';
-            categories.forEach(cat => {
-                categoryHTML += `<button class="category-btn px-3 py-1 bg-white border rounded-full text-sm" data-category="${cat}">${cat}</button>`;
-            });
-            categoryFiltersEl.innerHTML = categoryHTML;
+            categoryFiltersEl.innerHTML = CATEGORIES.map((cat, index) => `
+                <button class="category-btn px-4 py-1.5 text-sm font-semibold rounded-full transition ${index === 0 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}" data-category="${cat}">
+                    ${cat}
+                </button>
+            `).join('');
 
-            // Kategori butonlarına tıklama olayı ekle
+            // Butonlara tıklama olayı ekle
             document.querySelectorAll('.category-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    // Aktif stili ayarla
-                    document.querySelector('.category-btn.active').classList.remove('active', 'bg-indigo-600', 'text-white');
-                    e.target.classList.add('active', 'bg-indigo-600', 'text-white');
-                    renderProducts(); // Ürünleri yeniden render et
+                    document.querySelector('.category-btn.bg-indigo-600')?.classList.replace('bg-indigo-600', 'bg-gray-200');
+                    document.querySelector('.category-btn.text-white')?.classList.replace('text-white', 'text-gray-700');
+                    e.currentTarget.classList.replace('bg-gray-200', 'bg-indigo-600');
+                    e.currentTarget.classList.replace('text-gray-700', 'text-white');
+                    renderProducts();
                 });
             });
         }
 
-        // Ürünleri filtreleyip sıralayıp ekrana basan ana fonksiyon
+        // --- Ürünleri Filtreleyip Sıralayıp Ekrana Basan Fonksiyon ---
         function renderProducts() {
-            let filteredProducts = [...allProducts];
+            let productsToDisplay = [...allProducts];
 
-            // 1. Filtrele
-            const activeCategory = document.querySelector('.category-btn.active').dataset.category;
-            if (activeCategory !== 'all') {
-                filteredProducts = filteredProducts.filter(p => p.category === activeCategory);
+            // 1. Kategoriye Göre Filtrele
+            const activeCategory = document.querySelector('.category-btn.bg-indigo-600').dataset.category;
+            if (activeCategory !== 'Tümü') {
+                productsToDisplay = productsToDisplay.filter(p => p.category === activeCategory);
             }
 
-            // 2. Sırala
-            const sortOption = sortSelectEl.value;
-            if (sortOption === 'price_asc') {
-                filteredProducts.sort((a, b) => a.price - b.price);
-            } else if (sortOption === 'price_desc') {
-                filteredProducts.sort((a, b) => b.price - a.price);
+            // 2. Özel Filtreye Göre Sırala
+            const sortOption = sortFilterEl.value;
+            if (sortOption === 'popular') {
+                // En çok talep edileni (totalDemand) başa al
+                productsToDisplay.sort((a, b) => (b.totalDemand || 0) - (a.totalDemand || 0));
+            } else if (sortOption === 'ending_soon') {
+                // Kotayı doldurmaya en yakın olanı başa al (kota - talep farkı en az olan)
+                productsToDisplay.sort((a, b) => {
+                    const quotaA = a.quota || 500; // Varsayılan kota 500gr
+                    const quotaB = b.quota || 500;
+                    const remainingA = quotaA - (a.totalDemand || 0);
+                    const remainingB = quotaB - (b.totalDemand || 0);
+                    return remainingA - remainingB;
+                });
             }
-            
-            // 3. Ekrana Bas
-            if (filteredProducts.length === 0) {
-                productListEl.innerHTML = '<p class="col-span-full text-center">Bu kriterlere uygun ürün bulunamadı.</p>';
+
+            // 3. HTML Oluştur ve Ekrana Bas
+            if (productsToDisplay.length === 0) {
+                productGridEl.innerHTML = '<p class="col-span-full text-center py-10 text-gray-500">Bu kriterlere uygun esans bulunamadı.</p>';
                 return;
             }
 
-            productListEl.innerHTML = ''; // Listeyi temizle
-            filteredProducts.forEach(product => {
-                const productCardHTML = `
-                    <a href="product-detail.html?id=${product.id}" class="group block">
-                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-shadow duration-300">
-                            <div class="relative aspect-square w-full">
-                                <img src="${product.imageUrl}" alt="${product.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            productGridEl.innerHTML = productsToDisplay.map(product => {
+                const quota = product.quota || 500; // Her ürünün kendi kotası olabilir, yoksa 500gr varsay
+                const totalDemand = product.totalDemand || 0;
+                const percentage = Math.min((totalDemand / quota) * 100, 100);
+
+                return `
+                <a href="urun-detay.html?id=${product.id}" class="group block bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-all duration-300">
+                    <div class="relative w-full h-56">
+                        <img src="${product.imageUrl}" alt="${product.name}" class="w-full h-full object-cover"/>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-lg font-bold text-gray-900 truncate">${product.name}</h3>
+                        <p class="text-sm text-gray-500">${product.category}</p>
+                        
+                        <!-- İlerleme Çubuğu -->
+                        <div class="mt-4">
+                            <div class="flex justify-between text-xs font-semibold text-gray-600 mb-1">
+                                <span>${totalDemand}gr</span>
+                                <span>${quota}gr</span>
                             </div>
-                            <div class="p-4">
-                                <p class="text-sm text-gray-500 mb-1">${product.category}</p>
-                                <h3 class="text-lg font-semibold text-gray-800 truncate">${product.name}</h3>
-                                <p class="text-xl font-bold text-gray-900 mt-2">${product.price} TL</p>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="bg-indigo-600 h-2.5 rounded-full" style="width: ${percentage}%"></div>
                             </div>
                         </div>
-                    </a>
+                    </div>
+                </a>
                 `;
-                productListEl.innerHTML += productCardHTML;
-            });
+            }).join('');
         }
-
-        // Sıralama seçeneği değiştiğinde ürünleri yeniden render et
-        sortSelectEl.addEventListener('change', renderProducts);
-
+        
+        // --- Olay Dinleyicileri ---
+        sortFilterEl.addEventListener('change', renderProducts);
+        
+        // --- Sayfayı Başlat ---
+        initializePage();
     </script>
 </body>
 </html>
