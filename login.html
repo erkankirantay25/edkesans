@@ -5,16 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Giriş & Kayıt - Esanscim</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .form-input:placeholder-shown + .form-label { transform: translateY(0.85rem) scale(1); opacity: 0.5; }
-        .form-input:focus + .form-label, .form-input:not(:placeholder-shown) + .form-label {
-            transform: translateY(-0.75rem) scale(0.8);
-            opacity: 1;
-            background-color: white;
-            padding: 0 0.25rem;
-        }
-        .form-container { transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; }
-    </style>
 </head>
 <body class="bg-gray-50">
 
@@ -26,18 +16,17 @@
             <p id="page-subtitle" class="text-sm text-gray-500 mt-1">Giriş Yap</p>
         </div>
 
-        <div class="bg-white p-8 rounded-2xl shadow-lg overflow-hidden">
+        <div class="bg-white p-8 rounded-2xl shadow-lg">
             
-            <form id="login-form" class="space-y-6 form-container">
-                <div class="relative mt-2">
-                    <input id="login-email" type="email" required class="form-input w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-indigo-500 placeholder-transparent" placeholder="E-posta" />
-                    <label for="login-email" class="form-label absolute left-3 top-0 text-base transition-all pointer-events-none">E-posta</label>
+            <!-- GİRİŞ FORMU -->
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <input id="login-email" type="email" required class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="E-posta" />
                 </div>
-                <div class="relative mt-2">
-                    <input id="login-password" type="password" required class="form-input w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-indigo-500 placeholder-transparent" placeholder="Şifre" />
-                    <label for="login-password" class="form-label absolute left-3 top-0 text-base transition-all pointer-events-none">Şifre</label>
+                <div>
+                    <input id="login-password" type="password" required class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Şifre" />
                 </div>
-                 <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between">
                     <div class="flex items-center">
                         <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
                         <label for="remember-me" class="ml-2 block text-sm text-gray-900">Beni Hatırla</label>
@@ -48,22 +37,19 @@
                 </div>
             </form>
 
-            <form id="register-form" class="space-y-5 form-container hidden opacity-0">
-                <div class="relative mt-2">
-                    <input id="register-name" type="text" required class="form-input w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-indigo-500 placeholder-transparent" placeholder="İsim Soyisim" />
-                    <label for="register-name" class="form-label absolute left-3 top-0 text-base transition-all pointer-events-none">İsim Soyisim</label>
+            <!-- KAYIT FORMU (BAŞLANGIÇTA GİZLİ) -->
+            <form id="register-form" class="space-y-5 hidden">
+                 <div>
+                    <input id="register-name" type="text" required class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="İsim Soyisim" />
                 </div>
-                <div class="relative mt-2">
-                    <input id="register-phone" type="tel" required class="form-input w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-indigo-500 placeholder-transparent" placeholder="Cep Telefonu" />
-                    <label for="register-phone" class="form-label absolute left-3 top-0 text-base transition-all pointer-events-none">Cep Telefonu</label>
+                <div>
+                    <input id="register-phone" type="tel" required class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Cep Telefonu" />
                 </div>
-                <div class="relative mt-2">
-                    <input id="register-email" type="email" required class="form-input w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-indigo-500 placeholder-transparent" placeholder="E-posta" />
-                    <label for="register-email" class="form-label absolute left-3 top-0 text-base transition-all pointer-events-none">E-posta</label>
+                <div>
+                    <input id="register-email" type="email" required class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="E-posta" />
                 </div>
-                <div class="relative mt-2">
-                    <input id="register-password" type="password" required minlength="6" class="form-input w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-indigo-500 placeholder-transparent" placeholder="Şifre Oluştur" />
-                    <label for="register-password" class="form-label absolute left-3 top-0 text-base transition-all pointer-events-none">Şifre Oluştur (en az 6 karakter)</label>
+                <div>
+                    <input id="register-password" type="password" required minlength="6" class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300" placeholder="Şifre (en az 6 karakter)" />
                 </div>
                 <div>
                     <button type="submit" class="w-full py-3 font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 transition-colors">Hesap Oluştur</button>
@@ -85,9 +71,11 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         
+        console.log("Esanscim Login Scripti Başarıyla Yüklendi."); // DEBUG: Scriptin çalıştığını kontrol etmek için.
+
         const firebaseConfig = { /* Kendi Firebase config bilgilerin buraya */ };
         
         const app = initializeApp(firebaseConfig);
@@ -100,22 +88,31 @@
         const errorMessage = document.getElementById('error-message');
         const switchContainer = document.getElementById('switch-container'); 
 
-        // --- Event Delegation ile Form Geçişi ---
-        switchContainer.addEventListener('click', (e) => {
-            e.preventDefault();
+        // --- Form Geçişini Yöneten Fonksiyon ---
+        function toggleForms(showRegister) {
             errorMessage.innerText = ''; // Hata mesajını temizle
 
-            if (e.target.id === 'switch-to-register') {
+            if (showRegister) {
                 pageSubtitle.innerText = 'Hesap Oluştur';
-                loginForm.classList.add('hidden', 'opacity-0');
-                registerForm.classList.remove('hidden', 'opacity-0');
+                loginForm.classList.add('hidden');
+                registerForm.classList.remove('hidden');
                 switchContainer.innerHTML = `<p class="text-sm text-gray-600">Zaten bir hesabın var mı? <button id="switch-to-login" class="font-semibold text-indigo-600 hover:underline">Giriş Yap</button></p>`;
+            } else {
+                pageSubtitle.innerText = 'Giriş Yap';
+                registerForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                switchContainer.innerHTML = `<p class="text-sm text-gray-600">Hesabın yok mu? <button id="switch-to-register" class="font-semibold text-indigo-600 hover:underline">Hemen Hesap Oluştur</button></p>`;
+            }
+        }
+
+        // --- Event Delegation (SAĞLAM YÖNTEM) ---
+        // Sayfanın herhangi bir yerine tıklanınca kontrol et
+        document.body.addEventListener('click', (e) => {
+            if (e.target.id === 'switch-to-register') {
+                toggleForms(true); // Kayıt formunu göster
             } 
             else if (e.target.id === 'switch-to-login') {
-                pageSubtitle.innerText = 'Giriş Yap';
-                registerForm.classList.add('hidden', 'opacity-0');
-                loginForm.classList.remove('hidden', 'opacity-0');
-                switchContainer.innerHTML = `<p class="text-sm text-gray-600">Hesabın yok mu? <button id="switch-to-register" class="font-semibold text-indigo-600 hover:underline">Hemen Hesap Oluştur</button></p>`;
+                toggleForms(false); // Giriş formunu göster
             }
         });
 
@@ -132,21 +129,13 @@
             errorMessage.innerText = '';
             
             try {
-                // "Beni Hatırla" seçiliyse oturumu kalıcı yap
-                if (rememberMe) {
-                    await setPersistence(auth, browserLocalPersistence);
-                }
+                const persistenceType = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+                await setPersistence(auth, persistenceType);
                 
                 await signInWithEmailAndPassword(auth, email, password);
-                // Giriş başarılı olursa, admin olup olmadığını kontrol edip yönlendirebiliriz.
-                // Şimdilik direkt ana sayfaya yönlendiriyoruz.
                 window.location.href = 'index.html'; 
             } catch (error) {
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                     errorMessage.innerText = 'E-posta veya şifre hatalı.';
-                } else {
-                     errorMessage.innerText = 'Bir hata oluştu. Lütfen tekrar deneyin.';
-                }
+                errorMessage.innerText = 'E-posta veya şifre hatalı.';
                 button.disabled = false;
                 button.innerText = 'Giriş Yap';
             }
@@ -166,23 +155,18 @@
             errorMessage.innerText = '';
 
             try {
-                // 1. Firebase Auth'da kullanıcıyı oluştur
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                // 2. Firestore'da kullanıcı için bir doküman oluştur (Admin paneli için kritik)
                 await setDoc(doc(db, "users", user.uid), {
                     uid: user.uid,
                     name: name,
                     phone: phone,
                     email: user.email,
                     createdAt: serverTimestamp(),
-                    role: 'user', // Varsayılan rol 'user' olarak atanır
-                    isBanned: false,
-                    isActive: true,
+                    role: 'user',
                 });
-
-                // 3. Kullanıcının profilindeki görünen adını güncelle
+                
                 await updateProfile(user, { displayName: name });
                 
                 alert('Hesabınız başarıyla oluşturuldu! Ana sayfaya yönlendiriliyorsunuz.');
@@ -195,7 +179,6 @@
                     errorMessage.innerText = 'Şifre en az 6 karakter olmalıdır.';
                 } else {
                     errorMessage.innerText = 'Bir hata oluştu. Bilgileri kontrol edip tekrar deneyin.';
-                    console.error("Kayıt hatası:", err);
                 }
                 button.disabled = false;
                 button.innerText = 'Hesap Oluştur';
