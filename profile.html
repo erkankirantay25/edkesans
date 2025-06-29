@@ -8,41 +8,29 @@
 </head>
 <body class="bg-gray-100">
 
-    <!-- Header -->
-   <header id="main-header" class="bg-white/80 backdrop-blur-md sticky top-0 z-30">
-    <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-        <a href="index.html" class="text-2xl font-bold tracking-wider text-gray-900">ESANSCIM</a>
-        
-        <!-- Masaüstü Menüsü -->
-        <div class="hidden md:flex items-center space-x-8 text-sm font-medium">
-            <a href="index.html" class="text-gray-600 hover:text-indigo-600">Ana Sayfa</a>
-            <a href="urunler.html" class="text-gray-600 hover:text-indigo-600">Esanslar</a>
-        </div>
-        
-        <!-- Kullanıcı ve Sepet Aksiyonları -->
-        <div id="user-actions" class="flex items-center space-x-6">
-            <!-- JS ile dolacak -->
+    <header id="main-header" class="bg-white/80 backdrop-blur-md sticky top-0 z-30">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold tracking-wider text-gray-900">ESANSCIM</a>
             
-            <!-- SEPET İKONU -->
-            <a href="sepet.html" class="relative text-gray-600 hover:text-indigo-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
-            </a>
-        </div>
-
-        <!-- Mobil Menü Butonu (Gizli) -->
-    </nav>
-    <!-- Mobil Açılır Menü (Gizli) -->
+            <div class="hidden md:flex items-center space-x-8 text-sm font-medium">
+                <a href="index.html" class="text-gray-600 hover:text-indigo-600">Ana Sayfa</a>
+                <a href="urunler.html" class="text-gray-600 hover:text-indigo-600">Esanslar</a>
+            </div>
+            
+            <div id="user-actions" class="flex items-center space-x-6">
+                <a href="sepet.html" class="relative text-gray-600 hover:text-indigo-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
+                </a>
+            </div>
+        </nav>
     </header>
 
-    <!-- Ana İçerik -->
     <main class="container mx-auto px-6 py-8">
-        <!-- Yükleniyor... Durumu -->
         <div id="loading-state" class="text-center p-10">
             <p>Profil bilgileri yükleniyor...</p>
         </div>
 
-        <!-- Profil Bilgileri (Yüklenince görünecek) -->
         <div id="profile-content" class="hidden">
             <div class="bg-white p-6 rounded-lg shadow-md mb-8">
                 <h1 id="user-name" class="text-3xl font-bold text-gray-800"></h1>
@@ -50,129 +38,114 @@
                 <p class="mt-2 text-sm font-semibold text-indigo-600">Kullanıcı Kodunuz: <span id="user-code"></span></p>
             </div>
 
-            <h2 class="text-2xl font-bold mb-4 text-gray-800">Taleplerim</h2>
-            <div id="demands-list" class="space-y-4">
-                <!-- Talepler JavaScript ile buraya eklenecek -->
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Siparişlerim</h2>
+            <div id="orders-list" class="space-y-4">
             </div>
         </div>
     </main>
 
-    <!-- Firebase ve Sayfa Mantığı -->
     <script type="module">
-        // Firebase SDK'larını import et
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, doc, getDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
-  apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA",
-  authDomain: "esanscim.firebaseapp.com",
-  projectId: "esanscim",
-  storageBucket: "esanscim.firebasestorage.app",
-  messagingSenderId: "570763360884",
-  appId: "1:570763360884:web:47562ad20c047b9defaf21",
-};
+            apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA",
+            authDomain: "esanscim.firebaseapp.com",
+            projectId: "esanscim",
+            storageBucket: "esanscim.firebasestorage.app",
+            messagingSenderId: "570763360884",
+            appId: "1:570763360884:web:47562ad20c047b9defaf21",
+        };
 
-        // Firebase'i başlat
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // HTML elementlerini seç
         const loadingState = document.getElementById('loading-state');
         const profileContent = document.getElementById('profile-content');
         const userNameEl = document.getElementById('user-name');
         const userEmailEl = document.getElementById('user-email');
         const userCodeEl = document.getElementById('user-code');
-        const demandsListEl = document.getElementById('demands-list');
-        const logoutButton = document.getElementById('logout-button');
+        const ordersListEl = document.getElementById('orders-list');
+        const userActionsEl = document.getElementById('user-actions');
+        const cartCountEl = document.getElementById('cart-count');
 
-        // Kullanıcının giriş durumunu dinle
+        function getCart() { return JSON.parse(localStorage.getItem('esanscim_cart')) || []; }
+        function updateCartCount() {
+            cartCountEl.innerText = getCart().reduce((sum, item) => sum + item.quantity, 0);
+        }
+
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // KULLANICI GİRİŞ YAPMIŞ
-                
-                // 1. Kullanıcı profilini veritabanından çek
-                const userDocRef = doc(db, 'users', user.uid);
-                const userDocSnap = await getDoc(userDocRef);
+            const cartIconHTML = userActionsEl.querySelector('a[href="sepet.html"]').outerHTML;
+            let authHTML = '';
 
-                if (userDocSnap.exists()) {
-                    const userData = userDocSnap.data();
-                    userNameEl.innerText = userData.name;
+            if (user) {
+                const userDocRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userDocRef);
+                let userLinks = '';
+                
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    userNameEl.innerText = userData.name || 'İsimsiz Kullanıcı';
                     userEmailEl.innerText = userData.email;
                     userCodeEl.innerText = userData.userCode || 'Atanmamış';
+
+                    if (userData.role === 'admin') {
+                        userLinks = `<a href="admin.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Admin Paneli</a>`;
+                    } else {
+                        userLinks = `<a href="profile.html" class="font-semibold text-sm text-indigo-600">${user.displayName || 'Profilim'}</a>`;
+                    }
+                } else {
+                    userLinks = `<a href="profile.html" class="font-semibold text-sm text-indigo-600">${user.displayName || 'Profilim'}</a>`;
                 }
 
-                // 2. Kullanıcının taleplerini çek
-                const demandsQuery = query(collection(db, 'demands'), where("userId", "==", user.uid));
-                const demandsSnapshot = await getDocs(demandsQuery);
+                authHTML = userLinks + `<button id="logout-btn" class="text-sm font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
+                userActionsEl.innerHTML = authHTML + cartIconHTML;
+                document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
 
-                if (demandsSnapshot.empty) {
-                    demandsListEl.innerHTML = '<p class="text-gray-500">Henüz bir talep girmemişsiniz.</p>';
+                const ordersQuery = query(collection(db, 'orders'), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
+                const ordersSnapshot = await getDocs(ordersQuery);
+
+                if (ordersSnapshot.empty) {
+                    ordersListEl.innerHTML = '<p class="text-gray-500">Henüz bir sipariş vermemişsiniz.</p>';
                 } else {
-                    demandsListEl.innerHTML = ''; // Listeyi temizle
-                    
-                    // Her talep için ürün detayını da çek
-                    for (const demandDoc of demandsSnapshot.docs) {
-                        const demandData = demandDoc.data();
-                        
-                        const productDocRef = doc(db, 'products', demandData.productId);
-                        const productDocSnap = await getDoc(productDocRef);
-                        const productData = productDocSnap.exists() ? productDocSnap.data() : { totalDemand: 'Bilinmiyor' };
+                    ordersListEl.innerHTML = ordersSnapshot.docs.map(orderDoc => {
+                        const orderData = orderDoc.data();
+                        const orderDate = orderData.createdAt.toDate().toLocaleDateString('tr-TR');
+                        const itemsHTML = orderData.items.map(item => `
+                            <div class="flex justify-between items-center text-sm py-1">
+                                <span>${item.name} (x${item.quantity})</span>
+                                <span>${(item.price * item.quantity).toFixed(2)} TL</span>
+                            </div>
+                        `).join('');
 
-                        const isGuaranteed = demandData.orderInQueue <= 5; // İlk 5 kişi (250gr / 50gr)
-
-                        // Her bir talep için bir kart oluştur ve listeye ekle
-                        const demandCardHTML = `
+                        return `
                             <div class="bg-white p-4 rounded-lg shadow-sm border">
-                                <h3 class="font-bold text-lg">${demandData.productName}</h3>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2 text-sm">
-                                    <div>
-                                        <p class="font-semibold text-gray-500">Talep Miktarınız</p>
-                                        <p class="text-gray-800">${demandData.quantity} gr</p>
-                                    </div>
-                                    <div>
-                                        <p class="font-semibold text-gray-500">Sıranız</p>
-                                        <p class="text-gray-800">${demandData.orderInQueue}. kişi</p>
-                                    </div>
-                                    <div>
-                                        <p class="font-semibold text-gray-500">Ürünün Toplam Talebi</p>
-                                        <p class="font-bold ${productData.totalDemand >= 250 ? 'text-green-600' : 'text-orange-500'}">
-                                            ${productData.totalDemand} gr
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <p class="font-semibold text-gray-500">Durum</p>
-                                        <p class="font-bold ${isGuaranteed ? 'text-green-600' : 'text-red-600'}">
-                                            ${isGuaranteed ? 'Garanti Kotada' : 'Garanti Değil'}
-                                        </p>
-                                    </div>
+                                <div class="flex justify-between items-center">
+                                    <h3 class="font-bold">Sipariş #${orderDoc.id.substring(0, 8)}</h3>
+                                    <span class="text-xs text-gray-500">${orderDate}</span>
+                                </div>
+                                <div class="mt-2 border-t pt-2">
+                                    ${itemsHTML}
+                                </div>
+                                <div class="flex justify-end items-center font-bold text-lg mt-2 pt-2 border-t">
+                                    Toplam: ${orderData.totalAmount.toFixed(2)} TL
                                 </div>
                             </div>
                         `;
-                        demandsListEl.innerHTML += demandCardHTML;
-                    }
+                    }).join('');
                 }
 
-                // Yüklenme ekranını gizle, profil içeriğini göster
                 loadingState.style.display = 'none';
                 profileContent.style.display = 'block';
+                updateCartCount();
 
             } else {
-                // KULLANICI GİRİŞ YAPMAMIŞ
-                // Giriş sayfasına yönlendir
                 alert('Bu sayfayı görmek için giriş yapmalısınız.');
                 window.location.href = 'login.html';
             }
         });
-
-        // Çıkış yap butonu
-        logoutButton.addEventListener('click', async () => {
-            await signOut(auth);
-            // Çıkış yaptıktan sonra login sayfasına yönlendir
-            window.location.href = 'login.html';
-        });
-
     </script>
 </body>
 </html>
