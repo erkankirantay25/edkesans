@@ -14,6 +14,14 @@
             50% { opacity: .5; }
         }
         #mobile-menu { transition: max-height 0.3s ease-in-out; }
+        
+        /* Modal Stilleri */
+        .modal-overlay {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .modal-content {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -76,6 +84,40 @@
         </div>
     </main>
 
+    <!-- ÜRÜN DETAY MODAL (POP-UP) -->
+    <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden modal-overlay">
+        <div id="modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col md:flex-row overflow-hidden transform scale-95 opacity-0 modal-content">
+            <!-- Sol Taraf: Resim -->
+            <div class="w-full md:w-1/2">
+                <img id="modal-img" src="" alt="Ürün Resmi" class="w-full h-64 md:h-full object-cover">
+            </div>
+            <!-- Sağ Taraf: Detaylar -->
+            <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col relative overflow-y-auto">
+                <button id="modal-close-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                
+                <p id="modal-category" class="text-indigo-600 text-sm font-bold uppercase"></p>
+                <h2 id="modal-name" class="text-3xl font-bold text-gray-900 mt-1 mb-3"></h2>
+                <p id="modal-description" class="text-gray-600 mb-4 flex-grow"></p>
+                
+                <!-- Ek Bilgiler -->
+                <div class="border-t pt-4 mb-4">
+                     <p class="text-gray-500 text-sm">Gramaj: <span id="modal-grammage" class="font-medium text-gray-800"></span></p>
+                     <p class="text-gray-500 text-sm mt-1">Tahmini Temin Süresi: <span id="modal-delivery" class="font-medium text-gray-800"></span></p>
+                </div>
+
+                <div class="mt-auto">
+                    <p id="modal-price" class="text-gray-900 font-black text-4xl mb-4"></p>
+                    <button id="modal-add-to-cart-btn" class="w-full py-3 px-4 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors">
+                        Sepete Ekle
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <!-- JAVASCRIPT BÖLÜMÜ -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -100,6 +142,20 @@
         const menuButton = document.getElementById('menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
 
+        // --- Modal Elementleri ---
+        const modalEl = document.getElementById('product-modal');
+        const modalContentEl = document.getElementById('modal-content');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const modalImg = document.getElementById('modal-img');
+        const modalCategory = document.getElementById('modal-category');
+        const modalName = document.getElementById('modal-name');
+        const modalDescription = document.getElementById('modal-description');
+        const modalGrammage = document.getElementById('modal-grammage');
+        const modalDelivery = document.getElementById('modal-delivery');
+        const modalPrice = document.getElementById('modal-price');
+        const modalAddToCartBtn = document.getElementById('modal-add-to-cart-btn');
+
+
         // --- Sayfa Başlatıcı ---
         async function initializePage() {
             renderSkeletonCards(6);
@@ -108,6 +164,7 @@
             renderCategories();
             renderProducts("Tümü");
             updateCartCount();
+            setupModalListeners();
         }
 
         // --- Yüklenme Animasyonu ---
@@ -165,21 +222,22 @@
             }
 
             productGridEl.innerHTML = productsToDisplay.map(product => `
-                <div class="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col transform hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300">
-                    <a href="urun-detay.html?id=${product.id}" class="block">
+                <div data-product-id="${product.id}" class="product-card bg-white rounded-lg shadow-lg overflow-hidden flex flex-col transform hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer">
+                    <div class="relative">
                         <img src="${product.imageUrl || 'https://via.placeholder.com/400'}" alt="${product.name}" class="w-full h-48 object-cover">
-                    </a>
+                    </div>
                     <div class="p-4 flex flex-col flex-grow">
                         <p class="text-indigo-600 text-xs font-bold uppercase">${product.category}</p>
                         <h3 class="font-bold text-lg my-1 flex-grow">${product.name}</h3>
                         <p class="text-gray-900 font-black text-2xl mb-3">${product.price} TL</p>
-                        <button data-product-id="${product.id}" data-product-name="${product.name}" data-product-price="${product.price}" class="add-to-cart-btn mt-auto w-full py-2 px-4 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                        <button data-product-id="${product.id}" data-product-name="${product.name}" data-product-price="${product.price}" class="add-to-cart-btn mt-auto w-full py-2 px-4 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors z-10">
                             Sepete Ekle
                         </button>
                     </div>
                 </div>
             `).join('');
             
+            addProductCardListeners();
             addCartButtonListeners();
         }
 
@@ -187,20 +245,92 @@
         function getCart() { return JSON.parse(localStorage.getItem('esanscim_cart')) || []; }
         function saveCart(cart) { localStorage.setItem('esanscim_cart', JSON.stringify(cart)); updateCartCount(); }
         function updateCartCount() { cartCountEl.innerText = getCart().reduce((s, i) => s + i.quantity, 0); }
+        
+        function addToCart(productId, productName, productPrice) {
+            const cart = getCart();
+            const item = cart.find(i => i.id === productId);
+            if (item) {
+                item.quantity++;
+            } else {
+                cart.push({ id: productId, name: productName, price: parseFloat(productPrice), quantity: 1 });
+            }
+            saveCart(cart);
+            // Küçük bir bildirim gösterilebilir
+            alert(`'${productName}' sepete eklendi!`);
+        }
+
         function addCartButtonListeners() {
             document.querySelectorAll('.add-to-cart-btn').forEach(button => {
                 button.addEventListener('click', e => {
+                    e.stopPropagation(); // Kartın tıklanma olayını tetiklemesini engelle
                     const { productId, productName, productPrice } = e.currentTarget.dataset;
-                    const cart = getCart();
-                    const item = cart.find(i => i.id === productId);
-                    if (item) item.quantity++;
-                    else cart.push({ id: productId, name: productName, price: parseFloat(productPrice), quantity: 1 });
-                    saveCart(cart);
-                    alert(\`'\${productName}' sepete eklendi!\`);
+                    addToCart(productId, productName, productPrice);
                 });
             });
         }
         
+        // --- Modal Fonksiyonları ---
+        function openProductModal(productId) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return;
+
+            // Modal'ı ürün verileriyle doldur
+            modalImg.src = product.imageUrl || 'https://via.placeholder.com/800x600';
+            modalCategory.innerText = product.category || 'Kategori Yok';
+            modalName.innerText = product.name || 'İsimsiz Ürün';
+            modalDescription.innerText = product.description || 'Bu ürün için bir açıklama girilmemiştir.';
+            modalGrammage.innerText = product.grammage || 'Belirtilmemiş';
+            modalDelivery.innerText = product.deliveryTime || '2-4 iş günü';
+            modalPrice.innerText = `${product.price} TL`;
+
+            // Modal'ın sepet butonuna ürün bilgilerini ata
+            modalAddToCartBtn.dataset.productId = product.id;
+            modalAddToCartBtn.dataset.productName = product.name;
+            modalAddToCartBtn.dataset.productPrice = product.price;
+
+            // Modal'ı görünür yap ve animasyonu başlat
+            modalEl.classList.remove('hidden');
+            setTimeout(() => { // Tarayıcının 'hidden' sınıfının kaldırıldığını fark etmesi için küçük bir gecikme
+                modalEl.classList.add('opacity-100');
+                modalContentEl.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeProductModal() {
+            modalEl.classList.remove('opacity-100');
+            modalContentEl.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => { // Animasyonun bitmesini bekle
+                modalEl.classList.add('hidden');
+            }, 300);
+        }
+
+        function setupModalListeners() {
+            modalCloseBtn.addEventListener('click', closeProductModal);
+            modalEl.addEventListener('click', (e) => {
+                // Sadece dışarıdaki overlay'e tıklanırsa kapat
+                if (e.target === modalEl) {
+                    closeProductModal();
+                }
+            });
+            modalAddToCartBtn.addEventListener('click', e => {
+                const { productId, productName, productPrice } = e.currentTarget.dataset;
+                addToCart(productId, productName, productPrice);
+                closeProductModal();
+            });
+        }
+
+        function addProductCardListeners() {
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    // Sepete ekle butonuna tıklandıysa modal açılmasın
+                    if (e.target.closest('.add-to-cart-btn')) return;
+                    
+                    const productId = card.dataset.productId;
+                    openProductModal(productId);
+                });
+            });
+        }
+
         // --- Auth ve Mobil Menü Fonksiyonları ---
         onAuthStateChanged(auth, user => {
             const cartHTML = userActionsEl.querySelector('a[href="sepet.html"]').outerHTML;
