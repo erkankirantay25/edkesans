@@ -69,18 +69,29 @@
       </div>
     </div>
 
-    <script type="module">
+        <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         
-        console.log("Esanscim Login Scripti Başarıyla Yüklendi."); // DEBUG: Scriptin çalıştığını kontrol etmek için.
-
-        const firebaseConfig = { /* Kendi Firebase config bilgilerin buraya */ };
+        // --- SİZİN PROJENİZE AİT DOĞRU BİLGİLER ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyD0yX8bXweat1T-9uRI7t4p0S-7oQKV2XA",
+            authDomain: "esanscim.firebaseapp.com",
+            projectId: "esanscim",
+            storageBucket: "esanscim.firebasestorage.app",
+            messagingSenderId: "570763360884",
+            appId: "1:570763360884:web:47562ad20c047b9defaf21",
+            measurementId: "G-3GT6X79910"
+        };
+        
+        // --- GERİ KALAN KODLAR DEĞİŞMEYECEK ---
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        console.log("Firebase başarıyla başlatıldı. Esanscim Login Scripti aktif.");
 
         const pageSubtitle = document.getElementById('page-subtitle');
         const loginForm = document.getElementById('login-form');
@@ -88,10 +99,8 @@
         const errorMessage = document.getElementById('error-message');
         const switchContainer = document.getElementById('switch-container'); 
 
-        // --- Form Geçişini Yöneten Fonksiyon ---
         function toggleForms(showRegister) {
-            errorMessage.innerText = ''; // Hata mesajını temizle
-
+            errorMessage.innerText = '';
             if (showRegister) {
                 pageSubtitle.innerText = 'Hesap Oluştur';
                 loginForm.classList.add('hidden');
@@ -105,18 +114,15 @@
             }
         }
 
-        // --- Event Delegation (SAĞLAM YÖNTEM) ---
-        // Sayfanın herhangi bir yerine tıklanınca kontrol et
         document.body.addEventListener('click', (e) => {
             if (e.target.id === 'switch-to-register') {
-                toggleForms(true); // Kayıt formunu göster
+                toggleForms(true);
             } 
             else if (e.target.id === 'switch-to-login') {
-                toggleForms(false); // Giriş formunu göster
+                toggleForms(false);
             }
         });
 
-        // --- Giriş Yapma Formu ---
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = loginForm.querySelector('#login-email').value;
@@ -131,7 +137,6 @@
             try {
                 const persistenceType = rememberMe ? browserLocalPersistence : browserSessionPersistence;
                 await setPersistence(auth, persistenceType);
-                
                 await signInWithEmailAndPassword(auth, email, password);
                 window.location.href = 'index.html'; 
             } catch (error) {
@@ -141,7 +146,6 @@
             }
         });
 
-        // --- Kayıt Olma Formu ---
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = registerForm.querySelector('#register-name').value;
