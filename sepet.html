@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sepetim - Esanscim</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <header class="bg-white shadow-sm">
+        <nav class="container mx-auto px-6 py-4">
+            <a href="index.html" class="text-2xl font-bold text-gray-800">ESANSCIM</a>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+        <h1 class="text-3xl font-bold mb-6">Sepetim</h1>
+        <div id="cart-items-container" class="bg-white p-6 rounded-lg shadow-md">
+            <!-- Sepet içeriği JS ile buraya gelecek -->
+        </div>
+    </main>
+
+    <script type="module">
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // ... (initializeApp vs. de gerekli olacak, şimdilik Auth yeterli)
+        
+        const cartItemsContainer = document.getElementById('cart-items-container');
+
+        function getCart() {
+            return JSON.parse(localStorage.getItem('esanscim_cart')) || [];
+        }
+
+        function renderCart() {
+            const cart = getCart();
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = '<p>Sepetinizde ürün bulunmuyor.</p>';
+                return;
+            }
+
+            const itemsHTML = cart.map(item => `
+                <div class="flex justify-between items-center py-4 border-b">
+                    <div>
+                        <p class="font-semibold">${item.name}</p>
+                        <p class="text-sm text-gray-600">${item.price} TL</p>
+                    </div>
+                    <div class="font-semibold">${item.quantity} adet</div>
+                </div>
+            `).join('');
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            const checkoutButtonHTML = `
+                <div class="mt-6 text-right">
+                    <p class="text-xl font-bold">Toplam: ${total.toFixed(2)} TL</p>
+                    <button id="checkout-button" class="mt-4 px-6 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600">
+                        Ödemeye Geç
+                    </button>
+                </div>
+            `;
+
+            cartItemsContainer.innerHTML = itemsHTML + checkoutButtonHTML;
+            
+            // Ödeme butonuna tıklandığında giriş kontrolü yap
+            document.getElementById('checkout-button').addEventListener('click', () => {
+                const user = getAuth().currentUser;
+                if (user) {
+                    alert('Ödeme sayfasına yönlendiriliyor... (Bu sayfa henüz yapılmadı)');
+                } else {
+                    alert('Ödeme yapmak için lütfen giriş yapın.');
+                    // Kullanıcıyı, ödeme sonrası geri döneceği sepet sayfasına yönlendirme bilgisiyle login'e gönder
+                    window.location.href = `login.html?redirect=sepet.html`;
+                }
+            });
+        }
+
+        renderCart();
+    </script>
+</body>
+</html>
