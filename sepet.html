@@ -7,73 +7,285 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
-    <header class="bg-white shadow-sm">
-        <nav class="container mx-auto px-6 py-4">
+    <header class="bg-white shadow-sm sticky top-0 z-20">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <a href="index.html" class="text-2xl font-bold text-gray-800">ESANSCIM</a>
+            <a href="urunler.html" class="text-sm font-medium text-indigo-600 hover:underline">Alışverişe Devam Et →</a>
         </nav>
     </header>
 
     <main class="container mx-auto px-6 py-8">
-        <h1 class="text-3xl font-bold mb-6">Sepetim</h1>
-        <div id="cart-items-container" class="bg-white p-6 rounded-lg shadow-md">
-            <!-- Sepet içeriği JS ile buraya gelecek -->
+        <div id="loading-state" class="text-center p-10">
+            <p>Sepetiniz yükleniyor...</p>
+        </div>
+
+        <div id="auth-required-state" class="hidden bg-white p-8 rounded-lg shadow-md text-center">
+            <h2 class="text-2xl font-bold mb-4">Sepetinizi Görüntülemek İçin Giriş Yapın</h2>
+            <p class="text-gray-600 mb-6">Sipariş verebilmek ve sepetinizdeki ürünleri görebilmek için lütfen giriş yapın veya yeni bir hesap oluşturun.</p>
+            <a href="login.html?redirect=sepet.html" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700">Giriş Yap / Kayıt Ol</a>
+        </div>
+        
+        <div id="empty-cart-state" class="hidden bg-white p-8 rounded-lg shadow-md text-center">
+             <h2 class="text-2xl font-bold mb-4">Sepetiniz Boş</h2>
+             <p class="text-gray-600 mb-6">Görünüşe göre sepetinize henüz bir ürün eklememişsiniz.</p>
+             <a href="urunler.html" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700">Hemen Alışverişe Başla</a>
+        </div>
+
+        <div id="cart-content" class="hidden">
+            <h1 class="text-3xl font-bold mb-6">Alışveriş Sepetim</h1>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Sol Sütun: Ürünler ve Adres -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div id="cart-items-container" class="bg-white p-6 rounded-lg shadow-md">
+                        <!-- Sepet içeriği JS ile buraya gelecek -->
+                    </div>
+                     <div id="address-container" class="bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-xl font-bold mb-4">Teslimat Adresi</h2>
+                        <div id="address-selection">
+                            <!-- Adres seçenekleri JS ile buraya gelecek -->
+                        </div>
+                        <div class="mt-4">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="billing-same-as-shipping" checked class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                <span class="ml-2 text-sm text-gray-700">Fatura adresim, teslimat adresimle aynı.</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sağ Sütun: Sipariş Özeti -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white p-6 rounded-lg shadow-md sticky top-24">
+                        <h2 class="text-xl font-bold mb-4 border-b pb-4">Sipariş Özeti</h2>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Ara Toplam</span>
+                                <span id="summary-subtotal" class="font-medium">0.00 TL</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Kargo Ücreti</span>
+                                <span id="summary-shipping" class="font-medium">0.00 TL</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between font-bold text-lg mt-4 border-t pt-4">
+                            <span>Genel Toplam</span>
+                            <span id="summary-total">0.00 TL</span>
+                        </div>
+                        <div class="mt-6 space-y-3">
+                             <label class="flex items-start">
+                                <input type="checkbox" id="agreement-checkbox" class="h-4 w-4 mt-1 text-indigo-600 border-gray-300 rounded">
+                                <span class="ml-2 text-xs text-gray-600">Ön Bilgilendirme Formunu ve Mesafeli Satış Sözleşmesini okudum, onaylıyorum.</span>
+                            </label>
+                             <button id="checkout-button" disabled class="w-full px-6 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
+                                Ödemeye Geç
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
     <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        // ... (initializeApp vs. de gerekli olacak, şimdilik Auth yeterli)
-        
+        import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA",
+            authDomain: "esanscim.firebaseapp.com",
+            projectId: "esanscim",
+            storageBucket: "esanscim.firebasestorage.app",
+            messagingSenderId: "570763360884",
+            appId: "1:570763360884:web:47562ad20c047b9defaf21",
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- DOM Elements ---
+        const states = {
+            loading: document.getElementById('loading-state'),
+            authRequired: document.getElementById('auth-required-state'),
+            emptyCart: document.getElementById('empty-cart-state'),
+            cartContent: document.getElementById('cart-content')
+        };
         const cartItemsContainer = document.getElementById('cart-items-container');
+        const addressContainer = document.getElementById('address-selection');
+        const summary = {
+            subtotal: document.getElementById('summary-subtotal'),
+            shipping: document.getElementById('summary-shipping'),
+            total: document.getElementById('summary-total'),
+        };
+        const checkoutButton = document.getElementById('checkout-button');
+        const agreementCheckbox = document.getElementById('agreement-checkbox');
 
-        function getCart() {
-            return JSON.parse(localStorage.getItem('esanscim_cart')) || [];
-        }
+        const SHIPPING_COST = 49.99;
+        const FREE_SHIPPING_THRESHOLD = 500;
 
-        function renderCart() {
-            const cart = getCart();
+        let cart = [];
+        let currentUser = null;
+        let userData = null;
+
+        // --- Cart Logic ---
+        const getCart = () => JSON.parse(localStorage.getItem('esanscim_cart')) || [];
+        const saveCart = (currentCart) => localStorage.setItem('esanscim_cart', JSON.stringify(currentCart));
+        
+        const updateQuantity = (productId, gram, change) => {
+            const itemIndex = cart.findIndex(item => item.id === productId && item.gram === gram);
+            if (itemIndex > -1) {
+                cart[itemIndex].quantity += change;
+                if (cart[itemIndex].quantity <= 0) {
+                    cart.splice(itemIndex, 1);
+                }
+                saveCart(cart);
+                renderPage();
+            }
+        };
+
+        const removeItem = (productId, gram) => {
+             cart = cart.filter(item => !(item.id === productId && item.gram === gram));
+             saveCart(cart);
+             renderPage();
+        };
+
+        // --- Render Functions ---
+        const renderCartItems = () => {
             if (cart.length === 0) {
-                cartItemsContainer.innerHTML = '<p>Sepetinizde ürün bulunmuyor.</p>';
+                states.cartContent.style.display = 'none';
+                states.emptyCart.style.display = 'block';
+                return;
+            }
+            cartItemsContainer.innerHTML = cart.map(item => `
+                <div class="flex items-center py-4 border-b last:border-b-0">
+                    <img src="${item.imageUrl}" alt="${item.name}" class="w-20 h-20 object-cover rounded-md mr-4">
+                    <div class="flex-grow">
+                        <p class="font-semibold">${item.name}</p>
+                        <p class="text-sm text-gray-500">${item.gram}gr</p>
+                        <p class="text-sm font-bold text-indigo-600">${item.price.toFixed(2)} TL</p>
+                    </div>
+                    <div class="flex items-center mx-4">
+                        <button class="quantity-btn p-1" data-id="${item.id}" data-gram="${item.gram}" data-change="-1">-</button>
+                        <input type="text" value="${item.quantity}" readonly class="w-12 text-center border-gray-300 rounded-md mx-2">
+                        <button class="quantity-btn p-1" data-id="${item.id}" data-gram="${item.gram}" data-change="1">+</button>
+                    </div>
+                    <button class="remove-btn text-gray-400 hover:text-red-500" data-id="${item.id}" data-gram="${item.gram}">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            `).join('');
+            
+            // Add event listeners after rendering
+            document.querySelectorAll('.quantity-btn').forEach(btn => btn.onclick = (e) => updateQuantity(e.currentTarget.dataset.id, parseInt(e.currentTarget.dataset.gram), parseInt(e.currentTarget.dataset.change)));
+            document.querySelectorAll('.remove-btn').forEach(btn => btn.onclick = (e) => removeItem(e.currentTarget.dataset.id, parseInt(e.currentTarget.dataset.gram)));
+        };
+
+        const renderSummary = () => {
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+            const total = subtotal + shipping;
+
+            summary.subtotal.textContent = `${subtotal.toFixed(2)} TL`;
+            summary.shipping.textContent = shipping === 0 ? 'Ücretsiz' : `${shipping.toFixed(2)} TL`;
+            summary.total.textContent = `${total.toFixed(2)} TL`;
+        };
+        
+        const renderAddress = () => {
+            if (!userData || !userData.address || userData.address.trim() === '') {
+                 addressContainer.innerHTML = `
+                    <p class="text-red-500 text-sm">Siparişe devam etmek için kayıtlı bir teslimat adresiniz olmalıdır.</p>
+                    <a href="profile.html" class="mt-2 inline-block text-indigo-600 hover:underline text-sm font-semibold">Profil Sayfasından Adres Ekle →</a>
+                `;
+                checkoutButton.disabled = true;
+            } else {
+                 // Burada birden fazla adres olsaydı bir select box ile listelenebilirdi. Şimdilik tek adres varsayıyoruz.
+                addressContainer.innerHTML = `
+                    <div class="border rounded-md p-3">
+                        <p class="font-semibold text-sm">Kayıtlı Adresim</p>
+                        <p class="text-gray-600 text-sm whitespace-pre-wrap">${userData.address}</p>
+                    </div>
+                `;
+            }
+        };
+
+        const renderPage = () => {
+            cart = getCart();
+            if (cart.length > 0) {
+                renderCartItems();
+                renderSummary();
+                renderAddress();
+                states.cartContent.style.display = 'block';
+                states.emptyCart.style.display = 'none';
+            } else {
+                states.cartContent.style.display = 'none';
+                states.emptyCart.style.display = 'block';
+            }
+        };
+
+        // --- Main Execution Flow ---
+        onAuthStateChanged(auth, async (user) => {
+            states.loading.style.display = 'none';
+            if (user) {
+                currentUser = user;
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    userData = userDoc.data();
+                }
+                renderPage();
+            } else {
+                states.authRequired.style.display = 'block';
+            }
+        });
+        
+        agreementCheckbox.addEventListener('change', () => {
+            checkoutButton.disabled = !agreementCheckbox.checked || !userData.address;
+        });
+        
+        checkoutButton.addEventListener('click', async () => {
+             if (!agreementCheckbox.checked) {
+                alert('Lütfen sözleşmeleri onaylayın.');
+                return;
+            }
+            if (!userData || !userData.address || userData.address.trim() === '') {
+                alert('Lütfen profil sayfanızdan bir teslimat adresi ekleyin.');
                 return;
             }
 
-            const itemsHTML = cart.map(item => `
-                <div class="flex justify-between items-center py-4 border-b">
-                    <div>
-                        <p class="font-semibold">${item.name}</p>
-                        <p class="text-sm text-gray-600">${item.price} TL</p>
-                    </div>
-                    <div class="font-semibold">${item.quantity} adet</div>
-                </div>
-            `).join('');
-
-            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            checkoutButton.disabled = true;
+            checkoutButton.textContent = 'Sipariş Oluşturuluyor...';
             
-            const checkoutButtonHTML = `
-                <div class="mt-6 text-right">
-                    <p class="text-xl font-bold">Toplam: ${total.toFixed(2)} TL</p>
-                    <button id="checkout-button" class="mt-4 px-6 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600">
-                        Ödemeye Geç
-                    </button>
-                </div>
-            `;
-
-            cartItemsContainer.innerHTML = itemsHTML + checkoutButtonHTML;
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
             
-            // Ödeme butonuna tıklandığında giriş kontrolü yap
-            document.getElementById('checkout-button').addEventListener('click', () => {
-                const user = getAuth().currentUser;
-                if (user) {
-                    alert('Ödeme sayfasına yönlendiriliyor... (Bu sayfa henüz yapılmadı)');
-                } else {
-                    alert('Ödeme yapmak için lütfen giriş yapın.');
-                    // Kullanıcıyı, ödeme sonrası geri döneceği sepet sayfasına yönlendirme bilgisiyle login'e gönder
-                    window.location.href = `login.html?redirect=sepet.html`;
-                }
-            });
-        }
+            try {
+                await addDoc(collection(db, "orders"), {
+                    userId: currentUser.uid,
+                    customerInfo: {
+                        name: userData.name,
+                        email: userData.email,
+                        phone: userData.phone,
+                        address: userData.address
+                    },
+                    items: cart,
+                    subtotalAmount: subtotal,
+                    shippingAmount: shipping,
+                    totalAmount: subtotal + shipping,
+                    status: 'Yeni Sipariş',
+                    createdAt: serverTimestamp(),
+                });
+                
+                localStorage.removeItem('esanscim_cart'); // Sepeti temizle
+                alert('Siparişiniz başarıyla oluşturuldu! Siparişlerim sayfasına yönlendiriliyorsunuz.');
+                window.location.href = 'profile.html';
 
-        renderCart();
+            } catch (error) {
+                console.error("Sipariş oluşturma hatası: ", error);
+                alert('Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+                checkoutButton.disabled = false;
+                checkoutButton.textContent = 'Ödemeye Geç';
+            }
+        });
     </script>
 </body>
 </html>
