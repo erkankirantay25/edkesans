@@ -5,19 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profilim - Esanscim</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #notification {
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+        #notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
 
-    <header id="main-header" class="bg-white/80 backdrop-blur-md sticky top-0 z-30">
+    <header id="main-header" class="bg-white/80 backdrop-blur-md sticky top-0 z-30 shadow-sm">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <a href="index.html" class="text-2xl font-bold tracking-wider text-gray-900">ESANSCIM</a>
-            
             <div class="hidden md:flex items-center space-x-8 text-sm font-medium">
                 <a href="index.html" class="text-gray-600 hover:text-indigo-600">Ana Sayfa</a>
                 <a href="urunler.html" class="text-gray-600 hover:text-indigo-600">Esanslar</a>
             </div>
-            
-            <div id="user-actions" class="flex items-center space-x-6">
+            <div id="user-actions" class="flex items-center space-x-4 md:space-x-6">
+                <!-- User actions will be dynamically inserted here -->
                 <a href="sepet.html" class="relative text-gray-600 hover:text-indigo-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
@@ -26,36 +36,68 @@
         </nav>
     </header>
 
-    <main class="container mx-auto px-6 py-8">
+    <div id="notification" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg">
+        <span id="notification-message"></span>
+    </div>
+
+    <main class="container mx-auto px-6 py-12">
         <div id="loading-state" class="text-center p-10">
             <p>Profil bilgileri yükleniyor...</p>
         </div>
 
         <div id="profile-content" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
+            <!-- Sol Sütun: Profil ve Adres -->
             <div class="lg:col-span-1 space-y-8">
-                <!-- Kullanıcı Bilgileri -->
+                <!-- Profil Bilgileri Kartı -->
                 <div class="bg-white p-6 rounded-lg shadow-md">
-                    <h1 id="user-name" class="text-3xl font-bold text-gray-800"></h1>
-                    <p id="user-email" class="text-gray-600"></p>
-                    <p class="mt-2 text-sm font-semibold text-indigo-600">Kullanıcı Kodunuz: <span id="user-code" class="font-mono"></span></p>
+                    <div class="flex items-center space-x-4">
+                        <div id="avatar" class="w-16 h-16 rounded-full bg-indigo-500 text-white flex items-center justify-center text-2xl font-bold"></div>
+                        <div>
+                            <h1 id="user-name" class="text-2xl font-bold text-gray-800"></h1>
+                            <p id="user-email" class="text-gray-600 text-sm"></p>
+                        </div>
+                    </div>
+                    <div class="mt-6 border-t pt-4 space-y-2 text-sm">
+                         <p class="text-gray-700"><strong class="font-medium text-gray-500">Telefon:</strong> <span id="user-phone"></span></p>
+                         <p class="text-gray-700"><strong class="font-medium text-gray-500">Kullanıcı Kodu:</strong> <span id="user-code" class="font-mono bg-gray-100 px-2 py-1 rounded"></span></p>
+                    </div>
                 </div>
 
-                <!-- Adres Bilgileri -->
+                <!-- Adres Bilgileri Kartı -->
                 <div class="bg-white p-6 rounded-lg shadow-md">
                     <h2 class="text-xl font-bold mb-4 text-gray-800">Adres Bilgilerim</h2>
-                    <form id="address-form" class="space-y-4">
-                        <div>
-                            <label for="user-address" class="block text-sm font-medium text-gray-700">Teslimat Adresi</label>
-                            <textarea id="user-address" rows="4" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Lütfen tam teslimat adresinizi girin..."></textarea>
+                    
+                    <!-- Adres Görüntüleme Alanı -->
+                    <div id="address-display-view">
+                        <p id="address-text" class="text-gray-600 whitespace-pre-wrap">Adres bilgisi bulunamadı.</p>
+                        <button id="edit-address-btn" class="mt-4 w-full py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Düzenle</button>
+                    </div>
+
+                    <!-- Adres Düzenleme Formu (Gizli) -->
+                    <form id="address-form" class="hidden space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="address-city" class="block text-sm font-medium text-gray-700">İl</label>
+                                <select id="address-city" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></select>
+                            </div>
+                             <div>
+                                <label for="address-district" class="block text-sm font-medium text-gray-700">İlçe</label>
+                                <select id="address-district" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></select>
+                            </div>
                         </div>
-                        <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-                            Adresi Kaydet
-                        </button>
+                        <div>
+                            <label for="address-details" class="block text-sm font-medium text-gray-700">Açık Adres</label>
+                            <textarea id="address-details" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" placeholder="Mahalle, sokak, bina ve daire no..."></textarea>
+                        </div>
+                        <div class="flex items-center justify-end space-x-3">
+                             <button type="button" id="cancel-address-btn" class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">İptal</button>
+                             <button type="submit" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">Adresi Kaydet</button>
+                        </div>
                     </form>
                 </div>
             </div>
 
+            <!-- Sağ Sütun: Siparişler -->
             <div class="lg:col-span-2">
                 <h2 class="text-2xl font-bold mb-4 text-gray-800">Siparişlerim</h2>
                 <div id="orders-list" class="space-y-4">
@@ -69,7 +111,9 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, doc, getDoc, updateDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { tr_cities } from './assets/turkey-cities-districts.js'; // Varsayımsal dosya yolu
 
+        // --- Firebase Config (Do not change) ---
         const firebaseConfig = {
             apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA",
             authDomain: "esanscim.firebaseapp.com",
@@ -79,26 +123,94 @@
             appId: "1:570763360884:web:47562ad20c047b9defaf21",
         };
 
+        // --- App Initialization ---
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const loadingState = document.getElementById('loading-state');
-        const profileContent = document.getElementById('profile-content');
-        const userNameEl = document.getElementById('user-name');
-        const userEmailEl = document.getElementById('user-email');
-        const userCodeEl = document.getElementById('user-code');
-        const userAddressEl = document.getElementById('user-address');
-        const addressForm = document.getElementById('address-form');
-        const ordersListEl = document.getElementById('orders-list');
-        const userActionsEl = document.getElementById('user-actions');
-        const cartCountEl = document.getElementById('cart-count');
+        // --- DOM Elements ---
+        const elements = {
+            loadingState: document.getElementById('loading-state'),
+            profileContent: document.getElementById('profile-content'),
+            avatar: document.getElementById('avatar'),
+            userName: document.getElementById('user-name'),
+            userEmail: document.getElementById('user-email'),
+            userPhone: document.getElementById('user-phone'),
+            userCode: document.getElementById('user-code'),
+            addressDisplayView: document.getElementById('address-display-view'),
+            addressText: document.getElementById('address-text'),
+            editAddressBtn: document.getElementById('edit-address-btn'),
+            addressForm: document.getElementById('address-form'),
+            addressCity: document.getElementById('address-city'),
+            addressDistrict: document.getElementById('address-district'),
+            addressDetails: document.getElementById('address-details'),
+            cancelAddressBtn: document.getElementById('cancel-address-btn'),
+            ordersList: document.getElementById('orders-list'),
+            userActions: document.getElementById('user-actions'),
+            cartCount: document.getElementById('cart-count'),
+            notification: document.getElementById('notification'),
+            notificationMessage: document.getElementById('notification-message'),
+        };
 
-        function getCart() { return JSON.parse(localStorage.getItem('esanscim_cart')) || []; }
-        function updateCartCount() {
-            cartCountEl.innerText = getCart().reduce((sum, item) => sum + item.quantity, 0);
-        }
+        // --- Helper Functions ---
+        const getCart = () => JSON.parse(localStorage.getItem('esanscim_cart')) || [];
+        const updateCartCount = () => {
+            elements.cartCount.innerText = getCart().reduce((sum, item) => sum + item.quantity, 0);
+        };
+        const createAvatar = (name) => {
+            const initials = (name || 'K A').split(' ').map(n => n[0]).join('').toUpperCase();
+            elements.avatar.textContent = initials;
+        };
+        const showNotification = (message) => {
+            elements.notificationMessage.textContent = message;
+            elements.notification.classList.add('show');
+            setTimeout(() => {
+                elements.notification.classList.remove('show');
+            }, 3000);
+        };
 
+        const populateCities = () => {
+            elements.addressCity.innerHTML = '<option value="">İl Seçiniz</option>';
+            tr_cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city.name;
+                option.textContent = city.name;
+                elements.addressCity.appendChild(option);
+            });
+        };
+        const updateDistricts = (cityName) => {
+            const city = tr_cities.find(c => c.name === cityName);
+            elements.addressDistrict.innerHTML = '<option value="">İlçe Seçiniz</option>';
+            if (city) {
+                city.districts.forEach(district => {
+                    const option = document.createElement('option');
+                    option.value = district;
+                    option.textContent = district;
+                    elements.addressDistrict.appendChild(option);
+                });
+            }
+        };
+        const toggleAddressView = (isEditing) => {
+            elements.addressDisplayView.classList.toggle('hidden', isEditing);
+            elements.addressForm.classList.toggle('hidden', !isEditing);
+        };
+
+        const renderAddress = (addressString) => {
+            if (addressString && addressString.includes('\n')) {
+                const [details, cityInfo] = addressString.split('\n');
+                const [district, city] = cityInfo.split(' / ');
+                elements.addressText.textContent = addressString;
+                elements.addressDetails.value = details.trim();
+                elements.addressCity.value = city.trim();
+                updateDistricts(city.trim());
+                elements.addressDistrict.value = district.trim();
+            } else {
+                elements.addressText.textContent = 'Adres bilgisi bulunamadı. Lütfen ekleyin.';
+                elements.addressDetails.value = addressString || '';
+            }
+        };
+
+        // --- Main Logic ---
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 alert('Bu sayfayı görmek için giriş yapmalısınız.');
@@ -107,42 +219,40 @@
             }
 
             try {
-                // --- Header'ı ve Profil Bilgilerini Yükle ---
-                const cartIconHTML = userActionsEl.querySelector('a[href="sepet.html"]').outerHTML;
                 const userDocRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userDocRef);
-                let authHTML = '';
-                
+
+                // Render Header & Profile Info
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
+                    const cartIconHTML = elements.userActions.querySelector('a[href="sepet.html"]').outerHTML;
                     const userLinks = userData.role === 'admin' 
                         ? `<a href="admin.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Admin Paneli</a>`
-                        : `<a href="profile.html" class="font-semibold text-sm text-indigo-600">${userData.name || 'Profilim'}</a>`;
-                    authHTML = userLinks + `<button id="logout-btn" class="ml-4 text-sm font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
-                    
-                    userNameEl.innerText = userData.name || 'İsimsiz Kullanıcı';
-                    userEmailEl.innerText = userData.email;
-                    userCodeEl.innerText = userData.userCode || 'Atanmamış';
-                    userAddressEl.value = userData.address || '';
-                }
-                userActionsEl.innerHTML = authHTML + cartIconHTML;
-                document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).then(() => window.location.href = 'index.html'));
+                        : `<span class="font-semibold text-sm text-gray-800">${userData.name || 'Profilim'}</span>`;
+                    const authHTML = userLinks + `<button id="logout-btn" class="ml-4 text-sm font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
+                    elements.userActions.innerHTML = authHTML + cartIconHTML;
+                    document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).then(() => window.location.href = 'index.html'));
 
-                // --- Siparişleri yükle ---
+                    createAvatar(userData.name);
+                    elements.userName.textContent = userData.name || 'İsimsiz Kullanıcı';
+                    elements.userEmail.textContent = userData.email;
+                    elements.userPhone.textContent = userData.phone || 'Eklenmemiş';
+                    elements.userCode.textContent = userData.userCode || 'Atanmamış';
+                    
+                    populateCities();
+                    renderAddress(userData.address);
+                }
+
+                // Render Orders
                 const ordersQuery = query(collection(db, 'orders'), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
                 const ordersSnapshot = await getDocs(ordersQuery);
-
                 if (ordersSnapshot.empty) {
-                    ordersListEl.innerHTML = '<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">Henüz bir sipariş vermemişsiniz.</div>';
+                    elements.ordersList.innerHTML = '<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">Henüz bir sipariş vermemişsiniz.</div>';
                 } else {
-                    ordersListEl.innerHTML = ordersSnapshot.docs.map(orderDoc => {
-                        const orderData = orderDoc.data();
-                        
-                        // !!! HATA DÜZELTMESİ BURADA YAPILDI !!!
-                        // createdAt alanı yoksa hata vermemesi için ?. kullanıldı ve varsayılan bir metin eklendi.
-                        const orderDate = orderData.createdAt?.toDate().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric'}) || 'Tarih bilgisi yok';
-                        
-                        const itemsHTML = (orderData.items || []).map(item => `
+                    elements.ordersList.innerHTML = ordersSnapshot.docs.map(orderDoc => {
+                         const orderData = orderDoc.data();
+                         const orderDate = orderData.createdAt?.toDate().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric'}) || 'Tarih bilgisi yok';
+                         const itemsHTML = (orderData.items || []).map(item => `
                             <div class="flex justify-between items-center text-sm py-1">
                                 <span>${item.name || 'Bilinmeyen Ürün'} (${item.gram || '?'}gr x${item.quantity || 1})</span>
                                 <span class="font-medium">${((item.price || 0) * (item.quantity || 1)).toFixed(2)} TL</span>
@@ -150,72 +260,72 @@
                         `).join('');
 
                         return `
-                            <div class="bg-white p-4 rounded-lg shadow-sm border">
-                                <div class="flex justify-between items-center mb-2 pb-2 border-b">
-                                    <h3 class="font-bold text-gray-800">Sipariş #${orderDoc.id.substring(0, 8).toUpperCase()}</h3>
-                                    <span class="text-xs text-gray-500">${orderDate}</span>
-                                </div>
-                                <div class="mt-2 space-y-1">${itemsHTML}</div>
-                                <div class="flex justify-between items-center font-bold text-lg mt-3 pt-3 border-t">
-                                    <span>Toplam:</span>
-                                    <span>${(orderData.totalAmount || 0).toFixed(2)} TL</span>
-                                </div>
-                                <div class="mt-3 pt-3 border-t text-right">
-                                    <button data-order-id="${orderDoc.id}" class="return-request-btn text-xs font-medium text-white bg-orange-500 hover:bg-orange-600 py-1 px-3 rounded-md">İade Talebi Oluştur</button>
-                                </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm border">
+                            <div class="flex justify-between items-center mb-2 pb-2 border-b">
+                                <h3 class="font-bold text-gray-800">Sipariş #${orderDoc.id.substring(0, 8).toUpperCase()}</h3>
+                                <span class="text-xs text-gray-500">${orderDate}</span>
                             </div>
-                        `;
+                            <div class="mt-2 space-y-1">${itemsHTML}</div>
+                            <div class="flex justify-between items-center font-bold text-lg mt-3 pt-3 border-t">
+                                <span>Toplam:</span>
+                                <span>${(orderData.totalAmount || 0).toFixed(2)} TL</span>
+                            </div>
+                             <div class="mt-3 pt-3 border-t text-right">
+                                <button data-order-id="${orderDoc.id}" class="return-request-btn text-xs font-medium text-white bg-orange-500 hover:bg-orange-600 py-1 px-3 rounded-md">İade Talebi Oluştur</button>
+                            </div>
+                        </div>
+                    `;
                     }).join('');
                 }
-
             } catch (error) {
                 console.error("Profil sayfası yüklenirken bir hata oluştu:", error);
-                loadingState.innerHTML = '<p class="text-red-500">Profil bilgileri yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</p>';
+                elements.loadingState.innerHTML = '<p class="text-red-500">Profil bilgileri yüklenirken bir hata oluştu.</p>';
             } finally {
-                // Hata olsa bile yükleme ekranını kaldırıp içeriği göster.
-                loadingState.style.display = 'none';
-                profileContent.style.display = 'grid';
+                elements.loadingState.style.display = 'none';
+                elements.profileContent.style.display = 'grid';
                 updateCartCount();
             }
         });
 
-        // Adres kaydetme
-        addressForm.addEventListener('submit', async (e) => {
+        // --- Event Listeners ---
+        elements.addressCity.addEventListener('change', (e) => updateDistricts(e.target.value));
+        elements.editAddressBtn.addEventListener('click', () => toggleAddressView(true));
+        elements.cancelAddressBtn.addEventListener('click', () => toggleAddressView(false));
+        
+        elements.addressForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const currentUser = auth.currentUser;
             if (!currentUser) return;
 
-            const button = addressForm.querySelector('button[type="submit"]');
+            const city = elements.addressCity.value;
+            const district = elements.addressDistrict.value;
+            const details = elements.addressDetails.value.trim();
+
+            if (!city || !district || !details) {
+                alert('Lütfen tüm adres alanlarını doldurun.');
+                return;
+            }
+
+            const fullAddress = `${details}\n${district} / ${city}`;
+            const button = elements.addressForm.querySelector('button[type="submit"]');
             button.disabled = true;
-            button.innerText = 'Kaydediliyor...';
+            button.textContent = 'Kaydediliyor...';
 
             try {
                 const userDocRef = doc(db, "users", currentUser.uid);
-                await updateDoc(userDocRef, {
-                    address: userAddressEl.value.trim()
-                });
-                alert('Adresiniz başarıyla güncellendi!');
+                await updateDoc(userDocRef, { address: fullAddress });
+                showNotification('Adresiniz başarıyla güncellendi!');
+                elements.addressText.textContent = fullAddress;
+                toggleAddressView(false);
             } catch (error) {
                 console.error("Adres güncelleme hatası:", error);
                 alert('Adres güncellenirken bir hata oluştu.');
             } finally {
                 button.disabled = false;
-                button.innerText = 'Adresi Kaydet';
+                button.textContent = 'Adresi Kaydet';
             }
         });
-
-        // İade talebi butonu için olay dinleyici (event delegation)
-        ordersListEl.addEventListener('click', (e) => {
-            if (e.target && e.target.classList.contains('return-request-btn')) {
-                const orderId = e.target.dataset.orderId;
-                if (confirm(` #${orderId.substring(0,8).toUpperCase()} numaralı sipariş için iade talebi oluşturmak istediğinizden emin misiniz?`)) {
-                    // Burada iade talebini veritabanına işleyecek mantık olabilir.
-                    // Örn: updateDoc(doc(db, 'orders', orderId), { status: 'iade_talebi' });
-                    alert('İade talebiniz başarıyla alınmıştır. En kısa sürede sizinle iletişime geçilecektir.');
-                }
-            }
-        });
-
+        
     </script>
 </body>
 </html>
