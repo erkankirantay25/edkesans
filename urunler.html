@@ -6,37 +6,23 @@
     <title>Tüm Esanslar - Esanscim</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Yüklenme animasyonu için */
-        .skeleton-card {
-            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-            50% { opacity: .5; }
-        }
+        .skeleton-card { animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 50% { opacity: .5; } }
         #mobile-menu { transition: max-height 0.3s ease-in-out; }
-        
-        /* Modal Stilleri */
-        .modal-overlay {
-            transition: opacity 0.3s ease-in-out;
-        }
-        .modal-content {
-            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-        }
+        .modal-overlay { transition: opacity 0.3s ease-in-out; }
+        .modal-content { transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; }
     </style>
 </head>
 <body class="bg-gray-50">
 
-    <!-- HEADER -->
     <header class="bg-white shadow-sm sticky top-0 z-20">
         <nav class="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
             <a href="index.html" class="text-2xl font-bold text-gray-800 tracking-wider">ESANSCIM</a>
             <div class="hidden md:flex items-center space-x-6">
                 <a href="index.html" class="text-gray-600 hover:text-indigo-600">Ana Sayfa</a>
                 <a href="urunler.html" class="font-semibold text-indigo-600">Esanslar</a>
-                <a href="profile.html" class="text-gray-600 hover:text-indigo-600">Profilim</a>
             </div>
             <div id="user-actions" class="flex items-center space-x-6">
-                <!-- JS ile dolacak -->
                 <a href="sepet.html" class="relative text-gray-600 hover:text-indigo-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
@@ -49,25 +35,18 @@
             </div>
         </nav>
         <div id="mobile-menu" class="max-h-0 overflow-hidden md:hidden">
-             <!-- mobil menü linkleri JS ile eklenebilir -->
         </div>
     </header>
 
-    <!-- ANA İÇERİK BÖLÜMÜ -->
     <main class="container mx-auto px-4 sm:px-6 py-8">
         <div class="flex flex-col lg:flex-row gap-8">
-
-            <!-- SOL TARAF: KATEGORİ MENÜSÜ -->
             <aside class="w-full lg:w-1/4 xl:w-1/5">
                 <div class="bg-white p-5 rounded-lg shadow-md sticky top-24">
                     <h3 class="font-bold text-lg mb-4 border-b pb-2">Kategoriler</h3>
                     <ul id="category-list" class="space-y-1">
-                        <!-- Kategori linkleri JS ile dolacak -->
                     </ul>
                 </div>
             </aside>
-
-            <!-- SAĞ TARAF: ÜRÜN BÖLÜMÜ -->
             <section class="w-full lg:w-3/4 xl:w-4/5">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
                     <div>
@@ -75,38 +54,28 @@
                         <p id="page-description" class="text-sm text-gray-500 mt-1">Koleksiyonumuzdaki tüm esansları keşfedin.</p>
                     </div>
                 </div>
-
-                <!-- Ürün Izgarası -->
                 <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <!-- Başlangıçta iskelet kartlar gösterilecek -->
                 </div>
             </section>
         </div>
     </main>
 
-    <!-- ÜRÜN DETAY MODAL (POP-UP) -->
     <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden modal-overlay">
         <div id="modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col md:flex-row overflow-hidden transform scale-95 opacity-0 modal-content">
-            <!-- Sol Taraf: Resim -->
             <div class="w-full md:w-1/2">
                 <img id="modal-img" src="" alt="Ürün Resmi" class="w-full h-64 md:h-full object-cover">
             </div>
-            <!-- Sağ Taraf: Detaylar -->
             <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col relative overflow-y-auto">
                 <button id="modal-close-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
-                
                 <p id="modal-category" class="text-indigo-600 text-sm font-bold uppercase"></p>
                 <h2 id="modal-name" class="text-3xl font-bold text-gray-900 mt-1 mb-3"></h2>
                 <p id="modal-description" class="text-gray-600 mb-4 flex-grow"></p>
-                
-                <!-- Ek Bilgiler -->
                 <div class="border-t pt-4 mb-4">
                      <p class="text-gray-500 text-sm">Gramaj: <span id="modal-grammage" class="font-medium text-gray-800"></span></p>
                      <p class="text-gray-500 text-sm mt-1">Tahmini Temin Süresi: <span id="modal-delivery" class="font-medium text-gray-800"></span></p>
                 </div>
-
                 <div class="mt-auto">
                     <p id="modal-price" class="text-gray-900 font-black text-4xl mb-4"></p>
                     <button id="modal-add-to-cart-btn" class="w-full py-3 px-4 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors">
@@ -117,14 +86,12 @@
         </div>
     </div>
 
-
-    <!-- JAVASCRIPT BÖLÜMÜ -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, getDocs, query, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-          const firebaseConfig = {
+        const firebaseConfig = {
             apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA",
             authDomain: "esanscim.firebaseapp.com",
             projectId: "esanscim",
@@ -140,7 +107,6 @@
         let allProducts = [];
         const CATEGORIES = ["Tümü", "Kadın", "Erkek", "Unisex", "Popüler"];
 
-        // --- HTML Elementleri ---
         const pageTitleEl = document.getElementById('page-title');
         const pageDescriptionEl = document.getElementById('page-description');
         const categoryListEl = document.getElementById('category-list');
@@ -150,7 +116,6 @@
         const menuButton = document.getElementById('menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
 
-        // --- Modal Elementleri ---
         const modalEl = document.getElementById('product-modal');
         const modalContentEl = document.getElementById('modal-content');
         const modalCloseBtn = document.getElementById('modal-close-btn');
@@ -163,8 +128,6 @@
         const modalPrice = document.getElementById('modal-price');
         const modalAddToCartBtn = document.getElementById('modal-add-to-cart-btn');
 
-
-        // --- Sayfa Başlatıcı ---
         async function initializePage() {
             renderSkeletonCards(6);
             const productsSnapshot = await getDocs(query(collection(db, "products"), orderBy("name")));
@@ -175,7 +138,6 @@
             setupModalListeners();
         }
 
-        // --- Yüklenme Animasyonu ---
         function renderSkeletonCards(count) {
             let skeletonHTML = '';
             for (let i = 0; i < count; i++) {
@@ -193,7 +155,6 @@
             productGridEl.innerHTML = skeletonHTML;
         }
         
-        // --- Kategori ve Ürün Render Fonksiyonları ---
         function renderCategories() {
             categoryListEl.innerHTML = CATEGORIES.map(cat => `
                 <li><button class="category-btn w-full text-left p-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100" data-category="${cat}">${cat}</button></li>
@@ -249,7 +210,6 @@
             addCartButtonListeners();
         }
 
-        // --- Sepet Fonksiyonları ---
         function getCart() { return JSON.parse(localStorage.getItem('esanscim_cart')) || []; }
         function saveCart(cart) { localStorage.setItem('esanscim_cart', JSON.stringify(cart)); updateCartCount(); }
         function updateCartCount() { cartCountEl.innerText = getCart().reduce((s, i) => s + i.quantity, 0); }
@@ -263,26 +223,23 @@
                 cart.push({ id: productId, name: productName, price: parseFloat(productPrice), quantity: 1 });
             }
             saveCart(cart);
-            // Küçük bir bildirim gösterilebilir
             alert(`'${productName}' sepete eklendi!`);
         }
 
         function addCartButtonListeners() {
             document.querySelectorAll('.add-to-cart-btn').forEach(button => {
                 button.addEventListener('click', e => {
-                    e.stopPropagation(); // Kartın tıklanma olayını tetiklemesini engelle
+                    e.stopPropagation();
                     const { productId, productName, productPrice } = e.currentTarget.dataset;
                     addToCart(productId, productName, productPrice);
                 });
             });
         }
         
-        // --- Modal Fonksiyonları ---
         function openProductModal(productId) {
             const product = allProducts.find(p => p.id === productId);
             if (!product) return;
 
-            // Modal'ı ürün verileriyle doldur
             modalImg.src = product.imageUrl || 'https://via.placeholder.com/800x600';
             modalCategory.innerText = product.category || 'Kategori Yok';
             modalName.innerText = product.name || 'İsimsiz Ürün';
@@ -291,14 +248,12 @@
             modalDelivery.innerText = product.deliveryTime || '2-4 iş günü';
             modalPrice.innerText = `${product.price} TL`;
 
-            // Modal'ın sepet butonuna ürün bilgilerini ata
             modalAddToCartBtn.dataset.productId = product.id;
             modalAddToCartBtn.dataset.productName = product.name;
             modalAddToCartBtn.dataset.productPrice = product.price;
 
-            // Modal'ı görünür yap ve animasyonu başlat
             modalEl.classList.remove('hidden');
-            setTimeout(() => { // Tarayıcının 'hidden' sınıfının kaldırıldığını fark etmesi için küçük bir gecikme
+            setTimeout(() => {
                 modalEl.classList.add('opacity-100');
                 modalContentEl.classList.add('scale-100', 'opacity-100');
             }, 10);
@@ -307,7 +262,7 @@
         function closeProductModal() {
             modalEl.classList.remove('opacity-100');
             modalContentEl.classList.remove('scale-100', 'opacity-100');
-            setTimeout(() => { // Animasyonun bitmesini bekle
+            setTimeout(() => {
                 modalEl.classList.add('hidden');
             }, 300);
         }
@@ -315,7 +270,6 @@
         function setupModalListeners() {
             modalCloseBtn.addEventListener('click', closeProductModal);
             modalEl.addEventListener('click', (e) => {
-                // Sadece dışarıdaki overlay'e tıklanırsa kapat
                 if (e.target === modalEl) {
                     closeProductModal();
                 }
@@ -330,7 +284,6 @@
         function addProductCardListeners() {
             document.querySelectorAll('.product-card').forEach(card => {
                 card.addEventListener('click', (e) => {
-                    // Sepete ekle butonuna tıklandıysa modal açılmasın
                     if (e.target.closest('.add-to-cart-btn')) return;
                     
                     const productId = card.dataset.productId;
@@ -339,13 +292,27 @@
             });
         }
 
-        // --- Auth ve Mobil Menü Fonksiyonları ---
-        onAuthStateChanged(auth, user => {
-            const cartHTML = userActionsEl.querySelector('a[href="sepet.html"]').outerHTML;
+        onAuthStateChanged(auth, async (user) => {
+            const cartIconHTML = userActionsEl.querySelector('a[href="sepet.html"]').outerHTML;
+            let authHTML = '';
+            
             if (user) {
-                userActionsEl.innerHTML = `<a href="profile.html" class="text-gray-600 hover:text-indigo-600">${user.displayName || 'Profilim'}</a>` + cartHTML;
+                const userDocRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userDocRef);
+                let userLinks = '';
+                
+                if (userDoc.exists() && userDoc.data().role === 'admin') {
+                    userLinks = `<a href="admin.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Admin Paneli</a>`;
+                } else {
+                    userLinks = `<a href="profile.html" class="text-sm font-medium text-gray-700 hover:text-indigo-600">${user.displayName || 'Profilim'}</a>`;
+                }
+                authHTML = userLinks + `<button id="logout-btn" class="text-sm font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
             } else {
-                userActionsEl.innerHTML = `<a href="login.html" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md hover:bg-gray-700">Giriş Yap</a>` + cartHTML;
+                authHTML = `<a href="login.html" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md hover:bg-gray-700">Giriş Yap</a>`;
+            }
+            userActionsEl.innerHTML = authHTML + cartIconHTML;
+            if(user) {
+                document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
             }
         });
 
@@ -354,7 +321,6 @@
             mobileMenu.classList.toggle('max-h-96');
         });
 
-        // --- Sayfayı Başlat ---
         initializePage();
     </script>
 </body>
