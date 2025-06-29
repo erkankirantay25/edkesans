@@ -293,7 +293,7 @@
             document.getElementById('edit-product-category').value = product.category;
             document.getElementById('edit-product-quota').value = product.quota;
             document.getElementById('edit-product-description').value = product.description || '';
-            document.getElementById('edit-product-image-url').value = product.imageUrl || '';
+            document.getElementById('edit-product-image-url').value = product.imageUrl === DEFAULT_IMAGE_URL ? '' : product.imageUrl;
 
             const activeGrams = product.activeGrams || ALL_GRAM_OPTIONS;
             const gramOptionsContainer = document.getElementById('edit-gram-options');
@@ -324,6 +324,9 @@
                 e.preventDefault();
                 const id = document.getElementById('edit-product-id').value;
                 const activeGrams = Array.from(document.querySelectorAll('.gram-option-checkbox:checked')).map(cb => parseInt(cb.value));
+                
+                // DÜZELTME BURADA YAPILDI
+                const imageUrlValue = document.getElementById('edit-product-image-url').value;
 
                 const updatedData = {
                     name: document.getElementById('edit-product-name').value,
@@ -331,7 +334,7 @@
                     category: document.getElementById('edit-product-category').value,
                     quota: parseInt(document.getElementById('edit-product-quota').value),
                     description: document.getElementById('edit-product-description').value,
-                    imageUrl: document.getElementById('edit-product-image-url').value,
+                    imageUrl: imageUrlValue || DEFAULT_IMAGE_URL, // Boş ise standart URL'yi kullan
                     activeGrams: activeGrams
                 };
 
