@@ -6,46 +6,37 @@
     <title>Admin Paneli - Esanscim</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Sekmeli arayüz için stiller */
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .tab-btn.active { border-color: #4f46e5; color: #4f46e5; background-color: #eef2ff; }
-        
-        /* Bildirim çubuğu */
-        #notification {
-            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
-            transform: translateY(-100%);
-        }
-        #notification.show {
-            transform: translateY(0);
-        }
+        #notification { transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out; transform: translateY(-100%); }
+        #notification.show { transform: translateY(0); }
     </style>
 </head>
 <body class="bg-gray-100">
     
-    <!-- Erişim Reddedildi Mesajı (Başlangıçta gizli) -->
     <div id="access-denied" class="hidden h-screen w-screen flex flex-col items-center justify-center bg-gray-100 text-center p-4">
         <h1 class="text-3xl font-bold text-red-600">Erişim Reddedildi</h1>
         <p class="text-gray-700 mt-2">Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.</p>
         <a href="index.html" class="mt-6 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Ana Sayfaya Dön</a>
     </div>
 
-    <!-- Admin Paneli (Başlangıçta gizli) -->
     <div id="admin-panel" class="hidden">
         <header class="bg-white shadow-md">
             <div class="container mx-auto px-6 py-4 flex justify-between items-center">
                 <h1 class="text-2xl font-bold text-gray-800">ESANSCIM - Yönetim Paneli</h1>
-                <button id="logout-btn" class="text-sm text-red-600 hover:underline">Çıkış Yap</button>
+                <div>
+                    <a href="index.html" class="text-sm text-indigo-600 hover:underline mr-6">Siteyi Görüntüle</a>
+                    <button id="logout-btn" class="text-sm text-red-600 hover:underline">Çıkış Yap</button>
+                </div>
             </div>
         </header>
 
-        <!-- Bildirim Alanı -->
         <div id="notification" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-4 rounded-lg shadow-lg opacity-0">
             <span id="notification-message"></span>
         </div>
 
         <main class="container mx-auto p-6">
-            <!-- Sekme Butonları -->
             <div class="border-b border-gray-200 mb-6">
                 <nav class="-mb-px flex space-x-6">
                     <button class="tab-btn active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="products">Ürün Yönetimi</button>
@@ -53,13 +44,10 @@
                 </nav>
             </div>
 
-            <!-- Ürün Yönetimi Sekmesi -->
             <div id="tab-products" class="tab-content active">
-                <!-- YENİ ÜRÜN EKLEME / DÜZENLEME -->
                 <section class="bg-white p-6 rounded-lg shadow-md mb-8">
                     <h2 class="text-xl font-bold mb-4 border-b pb-2">Yeni Ürün Ekle</h2>
                     <form id="add-product-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Form alanları buraya gelecek -->
                          <div>
                             <label for="product-name" class="block text-sm font-medium text-gray-700">Ürün Adı</label>
                             <input type="text" id="product-name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
@@ -94,7 +82,6 @@
                         </div>
                         <div class="md:col-span-2 flex justify-between items-center">
                             <button type="button" id="bulk-upload-btn" class="inline-flex items-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                                 Excel ile Toplu Yükle
                             </button>
                             <button type="submit" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
@@ -103,43 +90,45 @@
                         </div>
                     </form>
                 </section>
-                <!-- ÜRÜNLER LİSTESİ -->
                 <section class="bg-white p-6 rounded-lg shadow-md">
                      <h2 class="text-xl font-bold mb-4 border-b pb-2">Mevcut Ürünler</h2>
-                     <div id="product-list-container" class="overflow-x-auto"><!-- Tablo buraya --></div>
+                     <div id="product-list-container" class="overflow-x-auto"></div>
                 </section>
             </div>
 
-            <!-- Sipariş Yönetimi Sekmesi -->
             <div id="tab-orders" class="tab-content">
                 <section class="bg-white p-6 rounded-lg shadow-md">
                     <div class="flex justify-between items-center mb-4 border-b pb-2">
                         <h2 class="text-xl font-bold">Tüm Siparişler</h2>
                         <button id="export-orders-btn" class="inline-flex items-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                             Tümünü İndir (CSV)
                         </button>
                     </div>
-                    <div id="order-list-container" class="overflow-x-auto"><!-- Sipariş Tablosu buraya --></div>
+                    <div id="order-list-container" class="overflow-x-auto"></div>
                 </section>
             </div>
         </main>
     </div>
-
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc, getDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        const firebaseConfig = { /* SENIN_CONFIG_BILGILERIN_BURAYA */ };
+        const firebaseConfig = {
+            apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA",
+            authDomain: "esanscim.firebaseapp.com",
+            projectId: "esanscim",
+            storageBucket: "esanscim.firebasestorage.app",
+            messagingSenderId: "570763360884",
+            appId: "1:570763360884:web:47562ad20c047b9defaf21",
+        };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const DEFAULT_IMAGE_URL = './images/default-esans.jpg'; // STANDART RESİM YOLU
+        const DEFAULT_IMAGE_URL = './images/default-esans.png';
 
-        // --- Elementler ---
         const adminPanel = document.getElementById('admin-panel');
         const accessDenied = document.getElementById('access-denied');
         const addProductForm = document.getElementById('add-product-form');
@@ -148,7 +137,6 @@
         const exportOrdersBtn = document.getElementById('export-orders-btn');
         const logoutBtn = document.getElementById('logout-btn');
 
-        // --- Yetki Kontrolü ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userDocRef = doc(db, "users", user.uid);
@@ -176,14 +164,12 @@
             });
         });
 
-        // --- Admin Paneli Başlatıcı ---
         function initializeAdminPanel() {
             setupTabs();
             fetchAndRenderProducts();
             fetchAndRenderOrders();
         }
 
-        // --- Sekme Yönetimi ---
         function setupTabs() {
             const tabButtons = document.querySelectorAll('.tab-btn');
             const tabContents = document.querySelectorAll('.tab-content');
@@ -201,9 +187,7 @@
             });
         }
 
-        // --- Ürün Yönetimi ---
         async function fetchAndRenderProducts() {
-            // ... (önceki admin panelindeki ürün listeleme kodu buraya gelecek, ama bu sefer tablo olarak)
              const q = query(collection(db, "products"), orderBy("name"));
              const snapshot = await getDocs(q);
              let tableHTML = `<table class="min-w-full divide-y divide-gray-200">
@@ -214,17 +198,21 @@
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">İşlemler</th>
                 </tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
             
-            snapshot.docs.forEach(doc => {
-                const product = { id: doc.id, ...doc.data() };
-                tableHTML += `<tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${product.name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.category}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.price} TL</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button class="text-red-600 hover:text-red-900" onclick="deleteProduct('${product.id}')">Sil</button>
-                    </td>
-                </tr>`;
-            });
+            if (snapshot.empty) {
+                tableHTML += '<tr><td colspan="4" class="text-center py-4">Henüz ürün eklenmemiş.</td></tr>';
+            } else {
+                snapshot.docs.forEach(doc => {
+                    const product = { id: doc.id, ...doc.data() };
+                    tableHTML += `<tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${product.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.category}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.price} TL</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button class="text-red-600 hover:text-red-900" onclick="deleteProduct('${product.id}')">Sil</button>
+                        </td>
+                    </tr>`;
+                });
+            }
 
             tableHTML += `</tbody></table>`;
             productListContainer.innerHTML = tableHTML;
@@ -248,10 +236,9 @@
                 await addDoc(collection(db, "products"), newProduct);
                 showNotification('Ürün başarıyla eklendi!', 'success');
                 addProductForm.reset();
-                document.getElementById('product-delivery-time').value = '2-4 iş günü'; // standardı geri yükle
-                fetchAndRenderProducts(); // Listeyi anında güncelle
+                document.getElementById('product-delivery-time').value = '2-4 iş günü';
+                fetchAndRenderProducts();
             } catch (error) {
-                console.error("Hata: ", error);
                 showNotification('Hata: Ürün eklenemedi.', 'error');
             }
         });
@@ -264,7 +251,6 @@
             }
         }
         
-        // --- Sipariş Yönetimi ---
         async function fetchAndRenderOrders() {
             const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
             const snapshot = await getDocs(q);
@@ -299,7 +285,6 @@
             tableHTML += `</tbody></table>`;
             orderListContainer.innerHTML = tableHTML;
             
-            // CSV indirme butonunu bağla
             exportOrdersBtn.onclick = () => exportOrdersToCSV(allOrders);
         }
 
@@ -335,13 +320,12 @@
             document.body.removeChild(link);
         }
 
-        // --- Yardımcı Fonksiyonlar ---
         function showNotification(message, type = 'success') {
             const notification = document.getElementById('notification');
             const notificationMessage = document.getElementById('notification-message');
             
             notificationMessage.textContent = message;
-            notification.className = 'fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg opacity-0'; // reset
+            notification.className = 'fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg opacity-0';
             notification.classList.add(type === 'success' ? 'bg-green-500' : 'bg-red-500');
             
             notification.classList.add('show');
@@ -352,7 +336,6 @@
                 notification.classList.add('opacity-0');
             }, 3000);
         }
-
     </script>
 </body>
 </html>
