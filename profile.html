@@ -106,70 +106,77 @@
                 return;
             }
 
-            // --- Header'ı güncelle ---
-            const cartIconHTML = userActionsEl.querySelector('a[href="sepet.html"]').outerHTML;
-            const userDocRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userDocRef);
-            let authHTML = '';
-            
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                const userLinks = userData.role === 'admin' 
-                    ? `<a href="admin.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Admin Paneli</a>`
-                    : `<a href="profile.html" class="font-semibold text-sm text-indigo-600">${userData.name || 'Profilim'}</a>`;
-                authHTML = userLinks + `<button id="logout-btn" class="ml-4 text-sm font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
-            }
-            userActionsEl.innerHTML = authHTML + cartIconHTML;
-            document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).then(() => window.location.href = 'index.html'));
+            try {
+                // --- Header'ı ve Profil Bilgilerini Yükle ---
+                const cartIconHTML = userActionsEl.querySelector('a[href="sepet.html"]').outerHTML;
+                const userDocRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userDocRef);
+                let authHTML = '';
+                
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    const userLinks = userData.role === 'admin' 
+                        ? `<a href="admin.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Admin Paneli</a>`
+                        : `<a href="profile.html" class="font-semibold text-sm text-indigo-600">${userData.name || 'Profilim'}</a>`;
+                    authHTML = userLinks + `<button id="logout-btn" class="ml-4 text-sm font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
+                    
+                    userNameEl.innerText = userData.name || 'İsimsiz Kullanıcı';
+                    userEmailEl.innerText = userData.email;
+                    userCodeEl.innerText = userData.userCode || 'Atanmamış';
+                    userAddressEl.value = userData.address || '';
+                }
+                userActionsEl.innerHTML = authHTML + cartIconHTML;
+                document.getElementById('logout-btn').addEventListener('click', () => signOut(auth).then(() => window.location.href = 'index.html'));
 
-            // --- Profil içeriğini doldur ---
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                userNameEl.innerText = userData.name || 'İsimsiz Kullanıcı';
-                userEmailEl.innerText = userData.email;
-                userCodeEl.innerText = userData.userCode || 'Atanmamış';
-                userAddressEl.value = userData.address || '';
-            }
+                // --- Siparişleri yükle ---
+                const ordersQuery = query(collection(db, 'orders'), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
+                const ordersSnapshot = await getDocs(ordersQuery);
 
-            // --- Siparişleri yükle ---
-            const ordersQuery = query(collection(db, 'orders'), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
-            const ordersSnapshot = await getDocs(ordersQuery);
-
-            if (ordersSnapshot.empty) {
-                ordersListEl.innerHTML = '<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">Henüz bir sipariş vermemişsiniz.</div>';
-            } else {
-                ordersListEl.innerHTML = ordersSnapshot.docs.map(orderDoc => {
-                    const orderData = orderDoc.data();
-                    const orderDate = orderData.createdAt.toDate().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric'});
-                    const itemsHTML = orderData.items.map(item => `
-                        <div class="flex justify-between items-center text-sm py-1">
-                            <span>${item.name} (${item.gram}gr x${item.quantity})</span>
-                            <span class="font-medium">${(item.price * item.quantity).toFixed(2)} TL</span>
-                        </div>
-                    `).join('');
-
-                    return `
-                        <div class="bg-white p-4 rounded-lg shadow-sm border">
-                            <div class="flex justify-between items-center mb-2 pb-2 border-b">
-                                <h3 class="font-bold text-gray-800">Sipariş #${orderDoc.id.substring(0, 8).toUpperCase()}</h3>
-                                <span class="text-xs text-gray-500">${orderDate}</span>
+                if (ordersSnapshot.empty) {
+                    ordersListEl.innerHTML = '<div class="bg-white p-4 rounded-lg shadow-sm text-center text-gray-500">Henüz bir sipariş vermemişsiniz.</div>';
+                } else {
+                    ordersListEl.innerHTML = ordersSnapshot.docs.map(orderDoc => {
+                        const orderData = orderDoc.data();
+                        
+                        // !!! HATA DÜZELTMESİ BURADA YAPILDI !!!
+                        // createdAt alanı yoksa hata vermemesi için ?. kullanıldı ve varsayılan bir metin eklendi.
+                        const orderDate = orderData.createdAt?.toDate().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric'}) || 'Tarih bilgisi yok';
+                        
+                        const itemsHTML = (orderData.items || []).map(item => `
+                            <div class="flex justify-between items-center text-sm py-1">
+                                <span>${item.name || 'Bilinmeyen Ürün'} (${item.gram || '?'}gr x${item.quantity || 1})</span>
+                                <span class="font-medium">${((item.price || 0) * (item.quantity || 1)).toFixed(2)} TL</span>
                             </div>
-                            <div class="mt-2 space-y-1">${itemsHTML}</div>
-                            <div class="flex justify-between items-center font-bold text-lg mt-3 pt-3 border-t">
-                                <span>Toplam:</span>
-                                <span>${orderData.totalAmount.toFixed(2)} TL</span>
-                            </div>
-                             <div class="mt-3 pt-3 border-t text-right">
-                                <button data-order-id="${orderDoc.id}" class="return-request-btn text-xs font-medium text-white bg-orange-500 hover:bg-orange-600 py-1 px-3 rounded-md">İade Talebi Oluştur</button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
+                        `).join('');
 
-            loadingState.style.display = 'none';
-            profileContent.style.display = 'grid';
-            updateCartCount();
+                        return `
+                            <div class="bg-white p-4 rounded-lg shadow-sm border">
+                                <div class="flex justify-between items-center mb-2 pb-2 border-b">
+                                    <h3 class="font-bold text-gray-800">Sipariş #${orderDoc.id.substring(0, 8).toUpperCase()}</h3>
+                                    <span class="text-xs text-gray-500">${orderDate}</span>
+                                </div>
+                                <div class="mt-2 space-y-1">${itemsHTML}</div>
+                                <div class="flex justify-between items-center font-bold text-lg mt-3 pt-3 border-t">
+                                    <span>Toplam:</span>
+                                    <span>${(orderData.totalAmount || 0).toFixed(2)} TL</span>
+                                </div>
+                                <div class="mt-3 pt-3 border-t text-right">
+                                    <button data-order-id="${orderDoc.id}" class="return-request-btn text-xs font-medium text-white bg-orange-500 hover:bg-orange-600 py-1 px-3 rounded-md">İade Talebi Oluştur</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+            } catch (error) {
+                console.error("Profil sayfası yüklenirken bir hata oluştu:", error);
+                loadingState.innerHTML = '<p class="text-red-500">Profil bilgileri yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.</p>';
+            } finally {
+                // Hata olsa bile yükleme ekranını kaldırıp içeriği göster.
+                loadingState.style.display = 'none';
+                profileContent.style.display = 'grid';
+                updateCartCount();
+            }
         });
 
         // Adres kaydetme
