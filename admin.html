@@ -53,8 +53,8 @@
                             <input type="text" id="product-name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                         <div>
-                            <label for="product-price" class="block text-sm font-medium text-gray-700">Fiyat (TL)</label>
-                            <input type="number" id="product-price" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                            <label for="product-unit-price" class="block text-sm font-medium text-gray-700">Birim Fiyat (TL / 25gr)</label>
+                            <input type="number" id="product-unit-price" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                         <div>
                             <label for="product-category" class="block text-sm font-medium text-gray-700">Kategori</label>
@@ -65,8 +65,8 @@
                             </select>
                         </div>
                          <div>
-                            <label for="product-grammage" class="block text-sm font-medium text-gray-700">Gramaj (örn: 50ml)</label>
-                            <input type="text" id="product-grammage" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                            <label for="product-quota" class="block text-sm font-medium text-gray-700">Kota (gr)</label>
+                            <input type="number" id="product-quota" value="500" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                         <div class="md:col-span-2">
                             <label for="product-description" class="block text-sm font-medium text-gray-700">Açıklama</label>
@@ -81,9 +81,12 @@
                             <input type="url" id="product-image-url" placeholder="Boş bırakılırsa standart resim kullanılır" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
                         </div>
                         <div class="md:col-span-2 flex justify-between items-center">
-                            <button type="button" id="bulk-upload-btn" class="inline-flex items-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                Excel ile Toplu Yükle
-                            </button>
+                            <div>
+                                <label for="csv-file-input" class="inline-flex items-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">
+                                    Excel ile Toplu Yükle
+                                </label>
+                                <input type="file" id="csv-file-input" class="hidden" accept=".csv">
+                            </div>
                             <button type="submit" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                                 Ürünü Ekle
                             </button>
@@ -110,10 +113,11 @@
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc, getDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, writeBatch, getDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA",
@@ -136,6 +140,7 @@
         const orderListContainer = document.getElementById('order-list-container');
         const exportOrdersBtn = document.getElementById('export-orders-btn');
         const logoutBtn = document.getElementById('logout-btn');
+        const csvFileInput = document.getElementById('csv-file-input');
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -143,7 +148,6 @@
                 const userDoc = await getDoc(userDocRef);
                 if (userDoc.exists() && userDoc.data().role === 'admin') {
                     adminPanel.style.display = 'block';
-                    accessDenied.style.display = 'none';
                     initializeAdminPanel();
                 } else {
                     showAccessDenied();
@@ -159,9 +163,7 @@
         }
         
         logoutBtn.addEventListener('click', () => {
-            signOut(auth).then(() => {
-                window.location.href = 'index.html';
-            });
+            signOut(auth).then(() => { window.location.href = 'index.html'; });
         });
 
         function initializeAdminPanel() {
@@ -172,16 +174,12 @@
 
         function setupTabs() {
             const tabButtons = document.querySelectorAll('.tab-btn');
-            const tabContents = document.querySelectorAll('.tab-content');
-
             tabButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     tabButtons.forEach(btn => btn.classList.remove('active'));
                     button.classList.add('active');
-                    
-                    const tabId = button.dataset.tab;
-                    tabContents.forEach(content => {
-                        content.id === `tab-${tabId}` ? content.classList.add('active') : content.classList.remove('active');
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.toggle('active', content.id === `tab-${button.dataset.tab}`);
                     });
                 });
             });
@@ -194,7 +192,7 @@
                 <thead class="bg-gray-50"><tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ürün Adı</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fiyat</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Birim Fiyat</th>
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">İşlemler</th>
                 </tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
             
@@ -202,18 +200,17 @@
                 tableHTML += '<tr><td colspan="4" class="text-center py-4">Henüz ürün eklenmemiş.</td></tr>';
             } else {
                 snapshot.docs.forEach(doc => {
-                    const product = { id: doc.id, ...doc.data() };
+                    const p = { id: doc.id, ...doc.data() };
                     tableHTML += `<tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${product.name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.category}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.price} TL</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${p.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${p.category}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${p.unitPrice} TL / 25gr</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button class="text-red-600 hover:text-red-900" onclick="deleteProduct('${product.id}')">Sil</button>
+                            <button class="text-red-600 hover:text-red-900" onclick="deleteProduct('${p.id}')">Sil</button>
                         </td>
                     </tr>`;
                 });
             }
-
             tableHTML += `</tbody></table>`;
             productListContainer.innerHTML = tableHTML;
         }
@@ -222,25 +219,64 @@
             e.preventDefault();
             const newProduct = {
                 name: document.getElementById('product-name').value,
-                price: parseFloat(document.getElementById('product-price').value),
+                unitPrice: parseFloat(document.getElementById('product-unit-price').value),
                 category: document.getElementById('product-category').value,
+                quota: parseInt(document.getElementById('product-quota').value),
                 imageUrl: document.getElementById('product-image-url').value || DEFAULT_IMAGE_URL,
                 description: document.getElementById('product-description').value,
-                grammage: document.getElementById('product-grammage').value,
                 deliveryTime: document.getElementById('product-delivery-time').value,
                 totalDemand: 0,
                 createdAt: serverTimestamp()
             };
-
             try {
                 await addDoc(collection(db, "products"), newProduct);
                 showNotification('Ürün başarıyla eklendi!', 'success');
                 addProductForm.reset();
                 document.getElementById('product-delivery-time').value = '2-4 iş günü';
+                document.getElementById('product-quota').value = '500';
                 fetchAndRenderProducts();
             } catch (error) {
                 showNotification('Hata: Ürün eklenemedi.', 'error');
             }
+        });
+
+        csvFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: async (results) => {
+                    if(results.errors.length > 0) {
+                        showNotification('CSV dosyasında hata var. Başlıkları kontrol edin.', 'error');
+                        return;
+                    }
+                    const batch = writeBatch(db);
+                    results.data.forEach(row => {
+                        const productRef = doc(collection(db, "products"));
+                        const productData = {
+                            name: row.name,
+                            unitPrice: parseFloat(row.unitPrice),
+                            category: row.category,
+                            quota: parseInt(row.quota) || 500,
+                            description: row.description || '',
+                            imageUrl: row.imageUrl || DEFAULT_IMAGE_URL,
+                            totalDemand: 0,
+                            createdAt: serverTimestamp()
+                        };
+                        batch.set(productRef, productData);
+                    });
+                    try {
+                        await batch.commit();
+                        showNotification(`${results.data.length} ürün başarıyla eklendi.`, 'success');
+                        fetchAndRenderProducts();
+                    } catch (error) {
+                        showNotification('Toplu ürün eklenirken hata oluştu.', 'error');
+                    }
+                }
+            });
+            event.target.value = '';
         });
 
         window.deleteProduct = async (id) => {
@@ -255,66 +291,40 @@
             const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
             const snapshot = await getDocs(q);
             let allOrders = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-
-            let tableHTML = `<table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50"><tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Müşteri</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tarih</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tutar</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Detay</th>
-                </tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
-            
-             if (allOrders.length === 0) {
-                 tableHTML += '<tr><td colspan="5" class="text-center py-4">Henüz sipariş bulunmuyor.</td></tr>';
-             } else {
-                allOrders.forEach(order => {
-                    const orderDate = order.createdAt?.toDate().toLocaleDateString('tr-TR') || 'Bilinmiyor';
-                    tableHTML += `<tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.customerInfo.name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${orderDate}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.totalAmount.toFixed(2)} TL</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.status || 'Yeni Sipariş'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button class="text-indigo-600 hover:text-indigo-900">Detay Gör</button>
-                        </td>
-                    </tr>`;
-                });
-             }
-             
-            tableHTML += `</tbody></table>`;
-            orderListContainer.innerHTML = tableHTML;
-            
+            orderListContainer.innerHTML = `<p class="text-center py-4">${allOrders.length} sipariş bulundu.</p>`;
             exportOrdersBtn.onclick = () => exportOrdersToCSV(allOrders);
         }
 
         function exportOrdersToCSV(orders) {
-            let csvContent = "data:text/csv;charset=utf-8,";
-            const headers = ["SiparisID", "MusteriAdı", "Telefon", "Adres", "SiparisTarihi", "ToplamTutar", "UrunAdi", "UrunAdet", "UrunFiyat"];
-            csvContent += headers.join(",") + "\r\n";
-
+            if (orders.length === 0) {
+                showNotification('İndirilecek sipariş bulunmuyor.', 'error');
+                return;
+            }
+            let csvData = [];
             orders.forEach(order => {
                 const orderDate = order.createdAt?.toDate().toISOString().split('T')[0] || '';
                 order.items.forEach(item => {
-                    const row = [
-                        order.id,
-                        `"${order.customerInfo.name.replace(/"/g, '""')}"`,
-                        order.customerInfo.phone,
-                        `"${order.customerInfo.address.replace(/"/g, '""')}"`,
-                        orderDate,
-                        order.totalAmount.toFixed(2),
-                        `"${item.name.replace(/"/g, '""')}"`,
-                        item.quantity,
-                        item.price.toFixed(2)
-                    ].join(",");
-                    csvContent += row + "\r\n";
+                    csvData.push({
+                        SiparisID: order.id,
+                        MusteriAdı: order.customerInfo.name,
+                        Telefon: order.customerInfo.phone,
+                        Adres: order.customerInfo.address,
+                        SiparisTarihi: orderDate,
+                        UrunAdi: item.name,
+                        Gramaj: item.gram,
+                        Adet: item.quantity,
+                        ToplamTutar: order.totalAmount.toFixed(2),
+                        SiparisDurumu: order.status || 'Yeni Sipariş'
+                    });
                 });
             });
-
-            const encodedUri = encodeURI(csvContent);
+            const csv = Papa.unparse(csvData);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
             link.setAttribute("download", "siparisler.csv");
+            link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -323,14 +333,10 @@
         function showNotification(message, type = 'success') {
             const notification = document.getElementById('notification');
             const notificationMessage = document.getElementById('notification-message');
-            
             notificationMessage.textContent = message;
             notification.className = 'fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-lg opacity-0';
-            notification.classList.add(type === 'success' ? 'bg-green-500' : 'bg-red-500');
-            
-            notification.classList.add('show');
+            notification.classList.add(type === 'success' ? 'bg-green-500' : 'bg-red-500', 'show');
             notification.classList.remove('opacity-0');
-            
             setTimeout(() => {
                 notification.classList.remove('show');
                 notification.classList.add('opacity-0');
