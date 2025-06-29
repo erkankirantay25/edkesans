@@ -11,7 +11,7 @@
         .modal-overlay.active { display: flex; }
         .tab-btn.active { border-color: #4f46e5; color: #4f46e5; background-color: #eef2ff; }
         #notification { transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out; transform: translateY(-120%); opacity: 0; }
-        #notification.show { transform: translateY(0); opacity: 1; }
+        #notification.show { transform: translateY(20px); opacity: 1; }
         .modal-content { transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; transform: scale(0.95); opacity: 0; }
         .modal-overlay.active .modal-content { transform: scale(1); opacity: 1; }
     </style>
@@ -25,7 +25,7 @@
     </div>
 
     <div id="admin-panel" class="hidden">
-        <header class="bg-white shadow-md">
+        <header class="bg-white shadow-md sticky top-0 z-30">
             <div class="container mx-auto px-6 py-4 flex justify-between items-center">
                 <h1 class="text-2xl font-bold text-gray-800">ESANSCIM - Yönetim Paneli</h1>
                 <div>
@@ -36,7 +36,7 @@
             </div>
         </header>
 
-        <div id="notification" class="fixed top-5 right-5 z-[100]">
+        <div id="notification" class="fixed top-0 right-5 z-[100]">
              <div id="notification-content" class="text-white py-2 px-4 rounded-lg shadow-lg">
                 <span id="notification-message"></span>
             </div>
@@ -88,9 +88,16 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc, writeBatch, getDoc, query, orderBy, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc, writeBatch, getDoc, query, orderBy, serverTimestamp, where, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA", authDomain: "esanscim.firebaseapp.com", projectId: "esanscim", storageBucket: "esanscim.appspot.com", messagingSenderId: "570763360884", appId: "1:570763360884:web:47562ad20c047b9defaf21" };
+        const firebaseConfig = {
+            apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA",
+            authDomain: "esanscim.firebaseapp.com",
+            projectId: "esanscim",
+            storageBucket: "esanscim.firebasestorage.app",
+            messagingSenderId: "570763360884",
+            appId: "1:570763360884:web:47562ad20c047b9defaf21",
+        };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -141,45 +148,9 @@
             ui.adminPanel.style.display = 'none';
             ui.accessDenied.style.display = 'flex';
         };
-
-        const initializeAdminPanel = async (user) => {
-            ui.adminPanel.style.display = 'block';
-            ui.adminUserEmail.textContent = user.email;
-            setupTabs();
-            await Promise.all([
-                fetchAndRenderProducts(),
-                fetchAndRenderOrders(),
-                fetchAndRenderUsers(),
-                fetchAndRenderShippingSettings()
-            ]);
-            setupEventListeners();
-        };
-
-        const setupTabs = () => {
-            document.querySelectorAll('.tab-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const tabName = e.currentTarget.dataset.tab;
-                    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-                    e.currentTarget.classList.add('active');
-                    document.querySelectorAll('.tab-content').forEach(content => {
-                        content.classList.toggle('active', content.id === `tab-${tabName}`);
-                    });
-                });
-            });
-        };
-
-        const setupEventListeners = () => {
-            ui.logoutBtn.addEventListener('click', () => signOut(auth));
-            ui.addProductForm.addEventListener('submit', handleAddProduct);
-            ui.csvFileInput.addEventListener('change', handleCsvUpload);
-            ui.forms.productEdit.addEventListener('submit', handleEditProduct);
-            document.querySelectorAll('.close-modal-btn, .cancel-edit-btn').forEach(btn => btn.addEventListener('click', () => closeAllModals()));
-            ui.exportAllOrdersBtn.addEventListener('click', () => exportOrdersToCSV(allOrders));
-            ui.userSearchInput.addEventListener('input', (e) => renderUsers(e.target.value.toLowerCase()));
-            ui.shipping.addForm.addEventListener('submit', handleAddCarrier);
-        };
         
-        const fetchAndRenderProducts = async () => { /* Renders product table */ };
+        const closeAllModals = () => Object.values(ui.modals).forEach(m => m.classList.remove('active'));
+        
         const renderProducts = () => {
             let tableHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ürün</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fiyat</th><th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">İşlemler</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
             if (allProducts.length === 0) tableHTML += `<tr><td colspan="4" class="text-center py-4">Henüz ürün yok.</td></tr>`;
@@ -197,24 +168,99 @@
             document.querySelectorAll('.edit-product-btn').forEach(b => b.addEventListener('click', (e) => openProductEditModal(e.target.dataset.id)));
             document.querySelectorAll('.delete-product-btn').forEach(b => b.addEventListener('click', (e) => handleDeleteProduct(e.target.dataset.id)));
         };
-        fetchAndRenderProducts = async () => {
-             const q = query(collection(db, "products"), orderBy("name"));
+        const fetchAndRenderProducts = async () => {
+             const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
              const snapshot = await getDocs(q);
              allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
              renderProducts();
         };
-        const handleAddProduct = async (e) => { /* ... */ };
-        const handleEditProduct = async (e) => { /* ... */ };
-        const handleDeleteProduct = async (id) => { /* ... */ };
-        const handleCsvUpload = (event) => { /* ... */ };
-        const openProductEditModal = (productId) => { /* ... */ };
-
-        const fetchAndRenderOrders = async () => {
-            const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-            const snapshot = await getDocs(q);
-            allOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderOrders();
+        const handleAddProduct = async (e) => {
+            e.preventDefault();
+            const newProduct = {
+                name: document.getElementById('product-name').value,
+                unitPrice: parseFloat(document.getElementById('product-unit-price').value),
+                category: document.getElementById('product-category').value,
+                quota: parseInt(document.getElementById('product-quota').value),
+                imageUrl: document.getElementById('product-image-url').value || DEFAULT_IMAGE_URL,
+                description: document.getElementById('product-description').value,
+                activeGrams: ALL_GRAM_OPTIONS,
+                totalDemand: 0,
+                createdAt: serverTimestamp()
+            };
+            try {
+                await addDoc(collection(db, "products"), newProduct);
+                showNotification('Ürün başarıyla eklendi!', 'success');
+                ui.addProductForm.reset();
+                document.getElementById('product-quota').value = '500';
+                fetchAndRenderProducts();
+            } catch (error) { showNotification('Hata: Ürün eklenemedi.', 'error'); }
         };
+        const handleEditProduct = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-product-id').value;
+            const activeGrams = Array.from(document.querySelectorAll('.gram-option-checkbox:checked')).map(cb => parseInt(cb.value));
+            const imageUrlValue = document.getElementById('edit-product-image-url').value;
+            const updatedData = {
+                name: document.getElementById('edit-product-name').value,
+                unitPrice: parseFloat(document.getElementById('edit-product-unit-price').value),
+                category: document.getElementById('edit-product-category').value,
+                quota: parseInt(document.getElementById('edit-product-quota').value),
+                description: document.getElementById('edit-product-description').value,
+                imageUrl: imageUrlValue.trim() || DEFAULT_IMAGE_URL,
+                activeGrams: activeGrams
+            };
+            try {
+                await updateDoc(doc(db, "products", id), updatedData);
+                showNotification('Ürün başarıyla güncellendi!', 'success');
+                closeAllModals();
+                fetchAndRenderProducts();
+            } catch (error) { showNotification('Hata: Ürün güncellenemedi.', 'error'); }
+        };
+        const handleDeleteProduct = async (id) => {
+             if (confirm('Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+                try {
+                    await deleteDoc(doc(db, "products", id));
+                    showNotification('Ürün silindi.', 'success');
+                    fetchAndRenderProducts();
+                } catch { showNotification('Hata: Ürün silinemedi.', 'error'); }
+            }
+        };
+        const openProductEditModal = (productId) => {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return;
+            document.getElementById('edit-product-id').value = product.id;
+            document.getElementById('edit-product-name').value = product.name;
+            document.getElementById('edit-product-unit-price').value = product.unitPrice;
+            document.getElementById('edit-product-category').value = product.category;
+            document.getElementById('edit-product-quota').value = product.quota;
+            document.getElementById('edit-product-description').value = product.description || '';
+            document.getElementById('edit-product-image-url').value = product.imageUrl === DEFAULT_IMAGE_URL ? '' : product.imageUrl;
+            const activeGrams = product.activeGrams || ALL_GRAM_OPTIONS;
+            document.getElementById('edit-gram-options').innerHTML = ALL_GRAM_OPTIONS.map(gram => `<label class="flex items-center space-x-2"><input type="checkbox" value="${gram}" class="gram-option-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded" ${activeGrams.includes(gram) ? 'checked' : ''}><span class="text-sm">${gram}gr</span></label>`).join('');
+            ui.modals.product.classList.add('active');
+        };
+        const handleCsvUpload = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true,
+                complete: async (results) => {
+                    if(results.errors.length > 0) { showNotification('CSV dosyasında hata var.', 'error'); return; }
+                    const batch = writeBatch(db);
+                    results.data.forEach(row => {
+                        const productRef = doc(collection(db, "products"));
+                        batch.set(productRef, { name: row.name, unitPrice: parseFloat(row.unitPrice), category: row.category, quota: parseInt(row.quota) || 500, description: row.description || '', imageUrl: row.imageUrl || DEFAULT_IMAGE_URL, activeGrams: ALL_GRAM_OPTIONS, totalDemand: 0, createdAt: serverTimestamp() });
+                    });
+                    try {
+                        await batch.commit();
+                        showNotification(`${results.data.length} ürün başarıyla eklendi.`, 'success');
+                        fetchAndRenderProducts();
+                    } catch (error) { showNotification('Toplu ürün eklenirken hata oluştu.', 'error'); }
+                }
+            });
+            event.target.value = '';
+        };
+
         const renderOrders = () => {
             let tableHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sipariş ID</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Müşteri</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tarih</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tutar</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th><th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase"></th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
             if (allOrders.length === 0) tableHTML += `<tr><td colspan="6" class="text-center py-4">Henüz sipariş yok.</td></tr>`;
@@ -231,6 +277,12 @@
             });
             ui.orderListContainer.innerHTML = tableHTML + `</tbody></table>`;
             document.querySelectorAll('.open-order-details-btn').forEach(b => b.addEventListener('click', (e) => openOrderDetailsModal(e.target.dataset.id)));
+        };
+        const fetchAndRenderOrders = async () => {
+            const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+            const snapshot = await getDocs(q);
+            allOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderOrders();
         };
         const openOrderDetailsModal = (orderId) => {
             const order = allOrders.find(o => o.id === orderId);
@@ -266,13 +318,23 @@
                 closeAllModals();
             } catch (error) { showNotification('Durum güncellenemedi.', 'error'); }
         };
-        const exportOrdersToCSV = (ordersToExport) => { /* ... */ };
-
-        const fetchAndRenderUsers = async () => {
-            const snapshot = await getDocs(collection(db, "users"));
-            allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderUsers();
+        const exportOrdersToCSV = (ordersToExport) => {
+            if (ordersToExport.length === 0) { showNotification('İndirilecek sipariş yok.', 'error'); return; }
+            const csvData = ordersToExport.flatMap(order => 
+                order.items.map(item => ({
+                    SiparisID: order.id, MusteriAdi: order.customerInfo.name, Email: order.customerInfo.email, Telefon: order.customerInfo.phone, Adres: order.shippingAddress.replace(/(\r\n|\n|\r)/gm, " "), KargoFirmasi: order.shippingCarrier, SiparisTarihi: order.createdAt?.toDate().toISOString() || '', UrunAdi: item.name, Gramaj: item.gram, Adet: item.quantity, BirimFiyat: item.price, ToplamTutar: order.totalAmount, SiparisDurumu: order.status
+                }))
+            );
+            const csv = Papa.unparse(csvData);
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `siparisler-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         };
+        
         const renderUsers = (searchTerm = '') => {
             const filteredUsers = searchTerm ? allUsers.filter(u => u.name?.toLowerCase().includes(searchTerm) || u.email?.toLowerCase().includes(searchTerm)) : allUsers;
             let tableHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ad Soyad</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">E-posta</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th><th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase"></th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
@@ -281,12 +343,17 @@
                 tableHTML += `<tr>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${u.name || 'Belirtilmemiş'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${u.email}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${u.role || 'user'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${u.role || 'user'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><button class="open-user-details-btn text-indigo-600 hover:text-indigo-900" data-id="${u.id}">Detaylar</button></td>
                 </tr>`;
             });
             ui.userListContainer.innerHTML = tableHTML + `</tbody></table>`;
             document.querySelectorAll('.open-user-details-btn').forEach(b => b.addEventListener('click', (e) => openUserDetailsModal(e.target.dataset.id)));
+        };
+        const fetchAndRenderUsers = async () => {
+            const snapshot = await getDocs(collection(db, "users"));
+            allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderUsers();
         };
         const openUserDetailsModal = async (userId) => {
             const user = allUsers.find(u => u.id === userId);
@@ -305,18 +372,25 @@
                     <div><h4 class="font-bold">Kayıtlı Adres</h4><p class="whitespace-pre-wrap">${user.address || 'Adres yok'}</p></div>
                 </div>
                 <h4 class="font-bold mb-2 border-t pt-4">Sipariş Geçmişi (${userOrders.length})</h4>
-                <div class="space-y-2">${userOrders.length > 0 ? userOrders.map(order => `<div class="p-2 border rounded-md flex justify-between items-center text-sm"><span>${order.createdAt.toDate().toLocaleDateString('tr-TR')} - ${order.id.substring(0,8)}...</span><span class="font-semibold">${order.totalAmount.toFixed(2)} TL</span><span>${order.status}</span></div>`).join('') : '<p>Bu kullanıcının siparişi bulunmuyor.</p>'}</div>`;
+                <div class="space-y-2 max-h-64 overflow-y-auto">${userOrders.length > 0 ? userOrders.map(order => `<div class="p-2 border rounded-md flex justify-between items-center text-sm"><span>${order.createdAt.toDate().toLocaleDateString('tr-TR')} - ${order.id.substring(0,8)}...</span><span class="font-semibold">${order.totalAmount.toFixed(2)} TL</span><span>${order.status}</span></div>`).join('') : '<p>Bu kullanıcının siparişi bulunmuyor.</p>'}</div>`;
         };
-
-        const fetchAndRenderShippingSettings = async () => {
-            const docRef = doc(db, "settings", "shippingOptions");
-            const docSnap = await getDoc(docRef);
-            shippingCarriers = docSnap.exists() && docSnap.data().carriers ? docSnap.data().carriers : [];
-            renderShippingCarriers();
-        };
+        
         const renderShippingCarriers = () => {
             ui.shipping.listContainer.innerHTML = `<h3 class="text-lg font-semibold mb-2">Aktif Firmalar</h3><div class="space-y-2">${shippingCarriers.map(c => `<div class="p-2 border rounded-md flex justify-between items-center"><span>${c}</span><button data-name="${c}" class="delete-carrier-btn text-red-500 hover:text-red-700">Sil</button></div>`).join('') || '<p class="text-sm text-gray-500">Aktif kargo firması yok.</p>'}</div>`;
             document.querySelectorAll('.delete-carrier-btn').forEach(b => b.addEventListener('click', (e) => handleDeleteCarrier(e.target.dataset.name)));
+        };
+        const fetchAndRenderShippingSettings = async () => {
+            const docRef = doc(db, "settings", "shippingOptions");
+            const docSnap = await getDoc(docRef);
+            shippingCarriers = docSnap.exists() && Array.isArray(docSnap.data().carriers) ? docSnap.data().carriers : [];
+            renderShippingCarriers();
+        };
+        const updateShippingCarriersInDB = async () => {
+            try {
+                await setDoc(doc(db, "settings", "shippingOptions"), { carriers: shippingCarriers });
+                showNotification('Kargo firmaları güncellendi.', 'success');
+                renderShippingCarriers();
+            } catch (error) { showNotification('Güncelleme hatası.', 'error'); }
         };
         const handleAddCarrier = async (e) => {
             e.preventDefault();
@@ -331,127 +405,60 @@
             shippingCarriers = shippingCarriers.filter(c => c !== name);
             await updateShippingCarriersInDB();
         };
-        const updateShippingCarriersInDB = async () => {
-            try {
-                await updateDoc(doc(db, "settings", "shippingOptions"), { carriers: shippingCarriers });
-                showNotification('Kargo firmaları güncellendi.', 'success');
-                renderShippingCarriers();
-            } catch (error) { showNotification('Güncelleme hatası.', 'error'); }
+        
+        const setupTabs = () => {
+            document.querySelectorAll('.tab-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const tabName = e.currentTarget.dataset.tab;
+                    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.toggle('active', content.id === `tab-${tabName}`);
+                    });
+                });
+            });
+        };
+        const setupEventListeners = () => {
+            ui.logoutBtn.addEventListener('click', () => signOut(auth));
+            ui.addProductForm.addEventListener('submit', handleAddProduct);
+            ui.csvFileInput.addEventListener('change', handleCsvUpload);
+            ui.forms.productEdit.addEventListener('submit', handleEditProduct);
+            document.querySelectorAll('.close-modal-btn, .cancel-edit-btn').forEach(btn => btn.addEventListener('click', () => closeAllModals()));
+            ui.exportAllOrdersBtn.addEventListener('click', () => exportOrdersToCSV(allOrders));
+            ui.userSearchInput.addEventListener('input', (e) => renderUsers(e.target.value.toLowerCase()));
+            ui.shipping.addForm.addEventListener('submit', handleAddCarrier);
+        };
+        const initializeAdminPanel = async (user) => {
+            ui.adminPanel.style.display = 'block';
+            ui.adminUserEmail.textContent = user.email;
+            setupTabs();
+            setupEventListeners();
+            await Promise.all([
+                fetchAndRenderProducts(),
+                fetchAndRenderOrders(),
+                fetchAndRenderUsers(),
+                fetchAndRenderShippingSettings()
+            ]);
         };
         
-        const closeAllModals = () => Object.values(ui.modals).forEach(m => m.classList.remove('active'));
-
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists() && userDoc.data().role === 'admin') initializeAdminPanel(user);
-                else { signOut(auth); showAccessDenied(); }
-            } else { showAccessDenied(); }
-        });
-
-        // FULL IMPLEMENTATIONS
-        handleAddProduct = async (e) => {
-            e.preventDefault();
-            const newProduct = {
-                name: document.getElementById('product-name').value,
-                unitPrice: parseFloat(document.getElementById('product-unit-price').value),
-                category: document.getElementById('product-category').value,
-                quota: parseInt(document.getElementById('product-quota').value),
-                imageUrl: document.getElementById('product-image-url').value || DEFAULT_IMAGE_URL,
-                description: document.getElementById('product-description').value,
-                activeGrams: ALL_GRAM_OPTIONS,
-                totalDemand: 0,
-                createdAt: serverTimestamp()
-            };
-            try {
-                await addDoc(collection(db, "products"), newProduct);
-                showNotification('Ürün başarıyla eklendi!', 'success');
-                ui.addProductForm.reset();
-                document.getElementById('product-quota').value = '500';
-                fetchAndRenderProducts();
-            } catch (error) { showNotification('Hata: Ürün eklenemedi.', 'error'); }
-        };
-        handleEditProduct = async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('edit-product-id').value;
-            const activeGrams = Array.from(document.querySelectorAll('.gram-option-checkbox:checked')).map(cb => parseInt(cb.value));
-            const imageUrlValue = document.getElementById('edit-product-image-url').value;
-            const updatedData = {
-                name: document.getElementById('edit-product-name').value,
-                unitPrice: parseFloat(document.getElementById('edit-product-unit-price').value),
-                category: document.getElementById('edit-product-category').value,
-                quota: parseInt(document.getElementById('edit-product-quota').value),
-                description: document.getElementById('edit-product-description').value,
-                imageUrl: imageUrlValue.trim() || DEFAULT_IMAGE_URL,
-                activeGrams: activeGrams
-            };
-            try {
-                await updateDoc(doc(db, "products", id), updatedData);
-                showNotification('Ürün başarıyla güncellendi!', 'success');
-                closeAllModals();
-                fetchAndRenderProducts();
-            } catch (error) { showNotification('Hata: Ürün güncellenemedi.', 'error'); }
-        };
-        handleDeleteProduct = async (id) => {
-             if (confirm('Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
                 try {
-                    await deleteDoc(doc(db, "products", id));
-                    showNotification('Ürün silindi.', 'success');
-                    fetchAndRenderProducts();
-                } catch { showNotification('Hata: Ürün silinemedi.', 'error'); }
-            }
-        };
-        openProductEditModal = (productId) => {
-            const product = allProducts.find(p => p.id === productId);
-            if (!product) return;
-            document.getElementById('edit-product-id').value = product.id;
-            document.getElementById('edit-product-name').value = product.name;
-            document.getElementById('edit-product-unit-price').value = product.unitPrice;
-            document.getElementById('edit-product-category').value = product.category;
-            document.getElementById('edit-product-quota').value = product.quota;
-            document.getElementById('edit-product-description').value = product.description || '';
-            document.getElementById('edit-product-image-url').value = product.imageUrl === DEFAULT_IMAGE_URL ? '' : product.imageUrl;
-            const activeGrams = product.activeGrams || ALL_GRAM_OPTIONS;
-            document.getElementById('edit-gram-options').innerHTML = ALL_GRAM_OPTIONS.map(gram => `<label class="flex items-center space-x-2"><input type="checkbox" value="${gram}" class="gram-option-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded" ${activeGrams.includes(gram) ? 'checked' : ''}><span class="text-sm">${gram}gr</span></label>`).join('');
-            ui.modals.product.classList.add('active');
-        };
-        handleCsvUpload = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            Papa.parse(file, {
-                header: true, skipEmptyLines: true,
-                complete: async (results) => {
-                    if(results.errors.length > 0) { showNotification('CSV dosyasında hata var.', 'error'); return; }
-                    const batch = writeBatch(db);
-                    results.data.forEach(row => {
-                        const productRef = doc(collection(db, "products"));
-                        batch.set(productRef, { name: row.name, unitPrice: parseFloat(row.unitPrice), category: row.category, quota: parseInt(row.quota) || 500, description: row.description || '', imageUrl: row.imageUrl || DEFAULT_IMAGE_URL, activeGrams: ALL_GRAM_OPTIONS, totalDemand: 0, createdAt: serverTimestamp() });
-                    });
-                    try {
-                        await batch.commit();
-                        showNotification(`${results.data.length} ürün başarıyla eklendi.`, 'success');
-                        fetchAndRenderProducts();
-                    } catch (error) { showNotification('Toplu ürün eklenirken hata oluştu.', 'error'); }
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists() && userDoc.data().role === 'admin') {
+                        initializeAdminPanel(user);
+                    } else {
+                        signOut(auth); 
+                        showAccessDenied();
+                    }
+                } catch(error) {
+                    console.error("Authentication check failed:", error);
+                    showAccessDenied();
                 }
-            });
-            event.target.value = '';
-        };
-        exportOrdersToCSV = (ordersToExport) => {
-            if (ordersToExport.length === 0) { showNotification('İndirilecek sipariş yok.', 'error'); return; }
-            const csvData = ordersToExport.flatMap(order => 
-                order.items.map(item => ({
-                    SiparisID: order.id, MusteriAdi: order.customerInfo.name, Email: order.customerInfo.email, Telefon: order.customerInfo.phone, Adres: order.shippingAddress.replace(/(\r\n|\n|\r)/gm, " "), KargoFirmasi: order.shippingCarrier, SiparisTarihi: order.createdAt?.toDate().toISOString() || '', UrunAdi: item.name, Gramaj: item.gram, Adet: item.quantity, BirimFiyat: item.price, ToplamTutar: order.totalAmount, SiparisDurumu: order.status
-                }))
-            );
-            const csv = Papa.unparse(csvData);
-            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `siparisler-${new Date().toISOString().split('T')[0]}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+            } else {
+                showAccessDenied();
+            }
+        });
 
     </script>
 </body>
