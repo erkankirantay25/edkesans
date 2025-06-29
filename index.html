@@ -30,32 +30,29 @@
 
     <!-- HEADER -->
     <header id="main-header" class="bg-white/80 backdrop-blur-md sticky top-0 z-30">
-        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-bold tracking-wider text-gray-900">ESANSCIM</a>
-            
-            <!-- Masaüstü Menüsü -->
-            <div class="hidden md:flex items-center space-x-8 text-sm font-medium">
-                <a href="index.html" class="text-indigo-600 font-semibold">Ana Sayfa</a>
-                <a href="urunler.html" class="text-gray-600 hover:text-indigo-600">Esanslar</a>
-                <a href="gizlilik-politikasi.html" class="text-gray-600 hover:text-indigo-600">Gizlilik Politikası</a>
-            </div>
-            
-            <!-- Kullanıcı Aksiyonları -->
-            <div id="user-actions" class="flex items-center space-x-4">
-                <!-- JS ile dolacak -->
-            </div>
-
-            <div class="md:hidden">
-                <button id="menu-button" class="text-gray-800 focus:outline-none">
-                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-                </button>
-            </div>
-        </nav>
-        <div id="mobile-menu" class="max-h-0 overflow-hidden md:hidden bg-white border-t">
-            <a href="index.html" class="block py-3 px-6 text-sm font-semibold text-indigo-600">Ana Sayfa</a>
-            <a href="urunler.html" class="block py-3 px-6 text-sm text-gray-700 hover:bg-gray-50">Esanslar</a>
-            <a href="gizlilik-politikasi.html" class="block py-3 px-6 text-sm text-gray-700 hover:bg-gray-50">Gizlilik Politikası</a>
+    <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+        <a href="index.html" class="text-2xl font-bold tracking-wider text-gray-900">ESANSCIM</a>
+        
+        <!-- Masaüstü Menüsü -->
+        <div class="hidden md:flex items-center space-x-8 text-sm font-medium">
+            <a href="index.html" class="text-gray-600 hover:text-indigo-600">Ana Sayfa</a>
+            <a href="urunler.html" class="text-gray-600 hover:text-indigo-600">Esanslar</a>
         </div>
+        
+        <!-- Kullanıcı ve Sepet Aksiyonları -->
+        <div id="user-actions" class="flex items-center space-x-6">
+            <!-- JS ile dolacak -->
+            
+            <!-- SEPET İKONU -->
+            <a href="sepet.html" class="relative text-gray-600 hover:text-indigo-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
+            </a>
+        </div>
+
+        <!-- Mobil Menü Butonu (Gizli) -->
+    </nav>
+    <!-- Mobil Açılır Menü (Gizli) -->
     </header>
 
     <main>
