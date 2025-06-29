@@ -15,71 +15,47 @@
     </header>
 
     <main class="container mx-auto px-6 py-8">
-        <div id="loading-state" class="text-center p-10">
-            <p>Sepetiniz yükleniyor...</p>
-        </div>
+        <div id="page-container">
+            <div id="loading-state" class="text-center p-10">
+                <p>Sepetiniz yükleniyor...</p>
+            </div>
 
-        <div id="auth-required-state" class="hidden bg-white p-8 rounded-lg shadow-md text-center">
-            <h2 class="text-2xl font-bold mb-4">Sepetinizi Görüntülemek İçin Giriş Yapın</h2>
-            <p class="text-gray-600 mb-6">Sipariş verebilmek ve sepetinizdeki ürünleri görebilmek için lütfen giriş yapın veya yeni bir hesap oluşturun.</p>
-            <a href="login.html?redirect=sepet.html" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700">Giriş Yap / Kayıt Ol</a>
-        </div>
-        
-        <div id="empty-cart-state" class="hidden bg-white p-8 rounded-lg shadow-md text-center">
-             <h2 class="text-2xl font-bold mb-4">Sepetiniz Boş</h2>
-             <p class="text-gray-600 mb-6">Görünüşe göre sepetinize henüz bir ürün eklememişsiniz.</p>
-             <a href="urunler.html" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700">Hemen Alışverişe Başla</a>
-        </div>
+            <div id="auth-required-state" class="hidden bg-white p-8 rounded-lg shadow-md text-center">
+                <h2 class="text-2xl font-bold mb-4">Sepetinizi Görüntülemek İçin Giriş Yapın</h2>
+                <p class="text-gray-600 mb-6">Sipariş verebilmek ve sepetinizdeki ürünleri görebilmek için lütfen giriş yapın.</p>
+                <a href="login.html?redirect=sepet.html" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700">Giriş Yap / Kayıt Ol</a>
+            </div>
+            
+            <div id="empty-cart-state" class="hidden bg-white p-8 rounded-lg shadow-md text-center">
+                <h2 class="text-2xl font-bold mb-4">Sepetiniz Boş</h2>
+                <p class="text-gray-600 mb-6">Görünüşe göre sepetinize henüz bir ürün eklememişsiniz.</p>
+                <a href="urunler.html" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700">Hemen Alışverişe Başla</a>
+            </div>
 
-        <div id="cart-content" class="hidden">
-            <h1 class="text-3xl font-bold mb-6">Alışveriş Sepetim</h1>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
-                <!-- Sol Sütun: Ürünler ve Adres -->
-                <div class="lg:col-span-2 space-y-6">
-                    <div id="cart-items-container" class="bg-white p-6 rounded-lg shadow-md">
-                        <!-- Sepet içeriği JS ile buraya gelecek -->
+            <div id="cart-content" class="hidden">
+                <h1 class="text-3xl font-bold mb-6">Alışveriş Sepetim</h1>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    <div class="lg:col-span-2 space-y-6">
+                        <div id="cart-items-container" class="bg-white p-6 rounded-lg shadow-md"></div>
+                        <div id="address-container" class="bg-white p-6 rounded-lg shadow-md"></div>
                     </div>
-                     <div id="address-container" class="bg-white p-6 rounded-lg shadow-md">
-                        <h2 class="text-xl font-bold mb-4">Teslimat Adresi</h2>
-                        <div id="address-selection">
-                            <!-- Adres seçenekleri JS ile buraya gelecek -->
-                        </div>
-                        <div class="mt-4">
-                            <label class="flex items-center">
-                                <input type="checkbox" id="billing-same-as-shipping" checked class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
-                                <span class="ml-2 text-sm text-gray-700">Fatura adresim, teslimat adresimle aynı.</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Sağ Sütun: Sipariş Özeti -->
-                <div class="lg:col-span-1">
-                    <div class="bg-white p-6 rounded-lg shadow-md sticky top-24">
-                        <h2 class="text-xl font-bold mb-4 border-b pb-4">Sipariş Özeti</h2>
-                        <div class="space-y-3">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Ara Toplam</span>
-                                <span id="summary-subtotal" class="font-medium">0.00 TL</span>
+                    <div class="lg:col-span-1">
+                        <div class="bg-white p-6 rounded-lg shadow-md sticky top-24">
+                            <h2 class="text-xl font-bold mb-4 border-b pb-4">Sipariş Özeti</h2>
+                            <div class="space-y-3">
+                                <div class="flex justify-between"><span class="text-gray-600">Ara Toplam</span><span id="summary-subtotal" class="font-medium"></span></div>
+                                <div class="flex justify-between"><span class="text-gray-600">Kargo Ücreti</span><span id="summary-shipping" class="font-medium"></span></div>
                             </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Kargo Ücreti</span>
-                                <span id="summary-shipping" class="font-medium">0.00 TL</span>
+                            <div class="flex justify-between font-bold text-lg mt-4 border-t pt-4"><span>Genel Toplam</span><span id="summary-total"></span></div>
+                            <div class="mt-6 space-y-3">
+                                <label class="flex items-start">
+                                    <input type="checkbox" id="agreement-checkbox" class="h-4 w-4 mt-1 text-indigo-600 border-gray-300 rounded">
+                                    <span class="ml-2 text-xs text-gray-600">Ön Bilgilendirme Formunu ve Mesafeli Satış Sözleşmesini okudum, onaylıyorum.</span>
+                                </label>
+                                <button id="checkout-button" disabled class="w-full px-6 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">Ödemeye Geç</button>
                             </div>
-                        </div>
-                        <div class="flex justify-between font-bold text-lg mt-4 border-t pt-4">
-                            <span>Genel Toplam</span>
-                            <span id="summary-total">0.00 TL</span>
-                        </div>
-                        <div class="mt-6 space-y-3">
-                             <label class="flex items-start">
-                                <input type="checkbox" id="agreement-checkbox" class="h-4 w-4 mt-1 text-indigo-600 border-gray-300 rounded">
-                                <span class="ml-2 text-xs text-gray-600">Ön Bilgilendirme Formunu ve Mesafeli Satış Sözleşmesini okudum, onaylıyorum.</span>
-                            </label>
-                             <button id="checkout-button" disabled class="w-full px-6 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
-                                Ödemeye Geç
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -104,7 +80,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- DOM Elements ---
+        const pageContainer = document.getElementById('page-container');
         const states = {
             loading: document.getElementById('loading-state'),
             authRequired: document.getElementById('auth-required-state'),
@@ -112,7 +88,7 @@
             cartContent: document.getElementById('cart-content')
         };
         const cartItemsContainer = document.getElementById('cart-items-container');
-        const addressContainer = document.getElementById('address-selection');
+        const addressContainer = document.getElementById('address-container');
         const summary = {
             subtotal: document.getElementById('summary-subtotal'),
             shipping: document.getElementById('summary-shipping'),
@@ -123,43 +99,43 @@
 
         const SHIPPING_COST = 49.99;
         const FREE_SHIPPING_THRESHOLD = 500;
-
         let cart = [];
         let currentUser = null;
         let userData = null;
 
-        // --- Cart Logic ---
-        const getCart = () => JSON.parse(localStorage.getItem('esanscim_cart')) || [];
+        const getCart = () => {
+            try { return JSON.parse(localStorage.getItem('esanscim_cart')) || []; }
+            catch (e) {
+                localStorage.removeItem('esanscim_cart');
+                return [];
+            }
+        };
         const saveCart = (currentCart) => localStorage.setItem('esanscim_cart', JSON.stringify(currentCart));
         
         const updateQuantity = (productId, gram, change) => {
             const itemIndex = cart.findIndex(item => item.id === productId && item.gram === gram);
             if (itemIndex > -1) {
                 cart[itemIndex].quantity += change;
-                if (cart[itemIndex].quantity <= 0) {
-                    cart.splice(itemIndex, 1);
-                }
+                if (cart[itemIndex].quantity <= 0) cart.splice(itemIndex, 1);
                 saveCart(cart);
-                renderPage();
+                renderPageContent();
             }
         };
-
         const removeItem = (productId, gram) => {
              cart = cart.filter(item => !(item.id === productId && item.gram === gram));
              saveCart(cart);
-             renderPage();
+             renderPageContent();
         };
 
-        // --- Render Functions ---
+        const showState = (stateToShow) => {
+            Object.values(states).forEach(state => state.style.display = 'none');
+            stateToShow.style.display = 'block';
+        };
+
         const renderCartItems = () => {
-            if (cart.length === 0) {
-                states.cartContent.style.display = 'none';
-                states.emptyCart.style.display = 'block';
-                return;
-            }
             cartItemsContainer.innerHTML = cart.map(item => `
                 <div class="flex items-center py-4 border-b last:border-b-0">
-                    <img src="${item.imageUrl}" alt="${item.name}" class="w-20 h-20 object-cover rounded-md mr-4">
+                    <img src="${item.imageUrl || './images/default-esans.png'}" alt="${item.name}" class="w-20 h-20 object-cover rounded-md mr-4">
                     <div class="flex-grow">
                         <p class="font-semibold">${item.name}</p>
                         <p class="text-sm text-gray-500">${item.gram}gr</p>
@@ -167,106 +143,71 @@
                     </div>
                     <div class="flex items-center mx-4">
                         <button class="quantity-btn p-1" data-id="${item.id}" data-gram="${item.gram}" data-change="-1">-</button>
-                        <input type="text" value="${item.quantity}" readonly class="w-12 text-center border-gray-300 rounded-md mx-2">
+                        <span class="w-12 text-center font-medium">${item.quantity}</span>
                         <button class="quantity-btn p-1" data-id="${item.id}" data-gram="${item.gram}" data-change="1">+</button>
                     </div>
-                    <button class="remove-btn text-gray-400 hover:text-red-500" data-id="${item.id}" data-gram="${item.gram}">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>
-            `).join('');
+                    <button class="remove-btn text-gray-400 hover:text-red-500" data-id="${item.id}" data-gram="${item.gram}">×</button>
+                </div>`).join('');
             
-            // Add event listeners after rendering
             document.querySelectorAll('.quantity-btn').forEach(btn => btn.onclick = (e) => updateQuantity(e.currentTarget.dataset.id, parseInt(e.currentTarget.dataset.gram), parseInt(e.currentTarget.dataset.change)));
             document.querySelectorAll('.remove-btn').forEach(btn => btn.onclick = (e) => removeItem(e.currentTarget.dataset.id, parseInt(e.currentTarget.dataset.gram)));
         };
 
-        const renderSummary = () => {
+        const renderSummaryAndAddress = () => {
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+            const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : SHIPPING_COST;
             const total = subtotal + shipping;
-
             summary.subtotal.textContent = `${subtotal.toFixed(2)} TL`;
             summary.shipping.textContent = shipping === 0 ? 'Ücretsiz' : `${shipping.toFixed(2)} TL`;
             summary.total.textContent = `${total.toFixed(2)} TL`;
-        };
-        
-        const renderAddress = () => {
-            if (!userData || !userData.address || userData.address.trim() === '') {
-                 addressContainer.innerHTML = `
-                    <p class="text-red-500 text-sm">Siparişe devam etmek için kayıtlı bir teslimat adresiniz olmalıdır.</p>
-                    <a href="profile.html" class="mt-2 inline-block text-indigo-600 hover:underline text-sm font-semibold">Profil Sayfasından Adres Ekle →</a>
-                `;
-                checkoutButton.disabled = true;
+
+            if (!userData?.address) {
+                addressContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Teslimat Adresi</h2><p class="text-red-500 text-sm">Siparişe devam etmek için kayıtlı bir teslimat adresiniz olmalıdır.</p><a href="profile.html" class="mt-2 inline-block text-indigo-600 hover:underline text-sm font-semibold">Profil Sayfasından Adres Ekle →</a>`;
             } else {
-                 // Burada birden fazla adres olsaydı bir select box ile listelenebilirdi. Şimdilik tek adres varsayıyoruz.
-                addressContainer.innerHTML = `
-                    <div class="border rounded-md p-3">
-                        <p class="font-semibold text-sm">Kayıtlı Adresim</p>
-                        <p class="text-gray-600 text-sm whitespace-pre-wrap">${userData.address}</p>
-                    </div>
-                `;
+                addressContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Teslimat Adresi</h2><div class="border rounded-md p-3"><p class="font-semibold text-sm">Kayıtlı Adresim</p><p class="text-gray-600 text-sm whitespace-pre-wrap">${userData.address}</p></div><div class="mt-4"><label class="flex items-center"><input type="checkbox" id="billing-same-as-shipping" checked class="h-4 w-4 text-indigo-600 border-gray-300 rounded"><span class="ml-2 text-sm text-gray-700">Fatura adresim, teslimat adresimle aynı.</span></label></div>`;
             }
         };
-
-        const renderPage = () => {
+        
+        const renderPageContent = () => {
             cart = getCart();
             if (cart.length > 0) {
                 renderCartItems();
-                renderSummary();
-                renderAddress();
-                states.cartContent.style.display = 'block';
-                states.emptyCart.style.display = 'none';
+                renderSummaryAndAddress();
+                showState(states.cartContent);
             } else {
-                states.cartContent.style.display = 'none';
-                states.emptyCart.style.display = 'block';
+                showState(states.emptyCart);
             }
         };
-
-        // --- Main Execution Flow ---
+        
         onAuthStateChanged(auth, async (user) => {
-            states.loading.style.display = 'none';
-            if (user) {
-                currentUser = user;
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists()) {
-                    userData = userDoc.data();
+            try {
+                if (user) {
+                    currentUser = user;
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    userData = userDoc.exists() ? userDoc.data() : { name: user.displayName, email: user.email };
+                    renderPageContent();
+                } else {
+                    showState(states.authRequired);
                 }
-                renderPage();
-            } else {
-                states.authRequired.style.display = 'block';
+            } catch (error) {
+                console.error("Sepet sayfası yüklenirken kritik bir hata oluştu:", error);
+                pageContainer.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-md text-center"><h2 class="text-2xl font-bold text-red-600 mb-4">Bir Hata Oluştu</h2><p class="text-gray-600 mb-6">Sayfa yüklenirken beklenmedik bir sorun oluştu. Lütfen daha sonra tekrar deneyin.</p><a href="index.html" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700">Ana Sayfaya Dön</a></div>`;
             }
         });
         
         agreementCheckbox.addEventListener('change', () => {
-            checkoutButton.disabled = !agreementCheckbox.checked || !userData.address;
+            checkoutButton.disabled = !agreementCheckbox.checked || !userData?.address;
         });
         
         checkoutButton.addEventListener('click', async () => {
-             if (!agreementCheckbox.checked) {
-                alert('Lütfen sözleşmeleri onaylayın.');
-                return;
-            }
-            if (!userData || !userData.address || userData.address.trim() === '') {
-                alert('Lütfen profil sayfanızdan bir teslimat adresi ekleyin.');
-                return;
-            }
-
-            checkoutButton.disabled = true;
-            checkoutButton.textContent = 'Sipariş Oluşturuluyor...';
-            
-            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
-            
-            try {
+             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+             const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : SHIPPING_COST;
+             checkoutButton.disabled = true;
+             checkoutButton.textContent = 'Sipariş Oluşturuluyor...';
+             try {
                 await addDoc(collection(db, "orders"), {
                     userId: currentUser.uid,
-                    customerInfo: {
-                        name: userData.name,
-                        email: userData.email,
-                        phone: userData.phone,
-                        address: userData.address
-                    },
+                    customerInfo: { name: userData.name, email: userData.email, phone: userData.phone, address: userData.address },
                     items: cart,
                     subtotalAmount: subtotal,
                     shippingAmount: shipping,
@@ -274,17 +215,14 @@
                     status: 'Yeni Sipariş',
                     createdAt: serverTimestamp(),
                 });
-                
-                localStorage.removeItem('esanscim_cart'); // Sepeti temizle
-                alert('Siparişiniz başarıyla oluşturuldu! Siparişlerim sayfasına yönlendiriliyorsunuz.');
+                localStorage.removeItem('esanscim_cart');
+                alert('Siparişiniz başarıyla oluşturuldu!');
                 window.location.href = 'profile.html';
-
-            } catch (error) {
-                console.error("Sipariş oluşturma hatası: ", error);
-                alert('Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.');
+             } catch (error) {
+                alert('Sipariş oluşturulurken bir hata oluştu.');
                 checkoutButton.disabled = false;
                 checkoutButton.textContent = 'Ödemeye Geç';
-            }
+             }
         });
     </script>
 </body>
