@@ -11,9 +11,10 @@
         #mobile-menu { transition: max-height 0.3s ease-in-out; }
         .modal-overlay { transition: opacity 0.3s ease-in-out; }
         .modal-content { transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; }
+        .gram-btn.selected { background-color: #4f46e5; color: white; }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-slate-50">
 
     <header class="bg-white shadow-sm sticky top-0 z-20">
         <nav class="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
@@ -54,7 +55,7 @@
                         <p id="page-description" class="text-sm text-gray-500 mt-1">Koleksiyonumuzdaki tüm esansları keşfedin.</p>
                     </div>
                 </div>
-                <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 </div>
             </section>
         </div>
@@ -72,14 +73,17 @@
                 <p id="modal-category" class="text-indigo-600 text-sm font-bold uppercase"></p>
                 <h2 id="modal-name" class="text-3xl font-bold text-gray-900 mt-1 mb-3"></h2>
                 <p id="modal-description" class="text-gray-600 mb-4 flex-grow"></p>
-                <div class="border-t pt-4 mb-4">
-                     <p class="text-gray-500 text-sm">Gramaj: <span id="modal-grammage" class="font-medium text-gray-800"></span></p>
-                     <p class="text-gray-500 text-sm mt-1">Tahmini Temin Süresi: <span id="modal-delivery" class="font-medium text-gray-800"></span></p>
+                
+                <div class="mb-4">
+                    <h4 class="font-semibold text-gray-700 mb-2">Gramaj Seçin:</h4>
+                    <div id="modal-gram-options" class="flex flex-wrap gap-2">
+                    </div>
                 </div>
-                <div class="mt-auto">
-                    <p id="modal-price" class="text-gray-900 font-black text-4xl mb-4"></p>
-                    <button id="modal-add-to-cart-btn" class="w-full py-3 px-4 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors">
-                        Sepete Ekle
+
+                <div class="mt-auto pt-4 border-t">
+                    <p id="modal-price" class="text-gray-900 font-black text-4xl mb-4 text-right">-- TL</p>
+                    <button id="modal-add-to-cart-btn" class="w-full py-3 px-4 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        Gramaj Seçin
                     </button>
                 </div>
             </div>
@@ -106,6 +110,7 @@
 
         let allProducts = [];
         const CATEGORIES = ["Tümü", "Kadın", "Erkek", "Unisex", "Popüler"];
+        const GRAM_OPTIONS = [25, 50, 75, 100, 150, 200, 250];
 
         const pageTitleEl = document.getElementById('page-title');
         const pageDescriptionEl = document.getElementById('page-description');
@@ -123,13 +128,12 @@
         const modalCategory = document.getElementById('modal-category');
         const modalName = document.getElementById('modal-name');
         const modalDescription = document.getElementById('modal-description');
-        const modalGrammage = document.getElementById('modal-grammage');
-        const modalDelivery = document.getElementById('modal-delivery');
+        const modalGramOptions = document.getElementById('modal-gram-options');
         const modalPrice = document.getElementById('modal-price');
         const modalAddToCartBtn = document.getElementById('modal-add-to-cart-btn');
 
         async function initializePage() {
-            renderSkeletonCards(6);
+            renderSkeletonCards(9);
             const productsSnapshot = await getDocs(query(collection(db, "products"), orderBy("name")));
             allProducts = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             renderCategories();
@@ -139,35 +143,27 @@
         }
 
         function renderSkeletonCards(count) {
-            let skeletonHTML = '';
-            for (let i = 0; i < count; i++) {
-                skeletonHTML += `
-                    <div class="bg-white rounded-lg shadow-md overflow-hidden skeleton-card">
-                        <div class="w-full h-48 bg-gray-300"></div>
-                        <div class="p-4">
-                            <div class="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
-                            <div class="h-6 bg-gray-300 rounded w-3/4"></div>
-                            <div class="h-10 bg-gray-300 rounded w-full mt-4"></div>
-                        </div>
+            productGridEl.innerHTML = Array(count).fill(0).map(() => `
+                <div class="bg-white rounded-lg shadow-md overflow-hidden skeleton-card">
+                    <div class="w-full h-48 bg-gray-300"></div>
+                    <div class="p-4">
+                        <div class="h-4 bg-gray-300 rounded w-1/4 mb-2"></div>
+                        <div class="h-6 bg-gray-300 rounded w-3/4"></div>
+                        <div class="h-10 bg-gray-300 rounded w-full mt-4"></div>
                     </div>
-                `;
-            }
-            productGridEl.innerHTML = skeletonHTML;
+                </div>
+            `).join('');
         }
         
         function renderCategories() {
             categoryListEl.innerHTML = CATEGORIES.map(cat => `
                 <li><button class="category-btn w-full text-left p-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100" data-category="${cat}">${cat}</button></li>
             `).join('');
-
             document.querySelectorAll('.category-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const category = e.currentTarget.dataset.category;
                     pageTitleEl.innerText = category === "Tümü" ? "Tüm Esanslar" : `${category} Esansları`;
-                    pageDescriptionEl.innerText = category === "Tümü" 
-                        ? "Koleksiyonumuzdaki tüm esansları keşfedin." 
-                        : `${category} kategorisindeki esanslar listeleniyor.`;
-                    
+                    pageDescriptionEl.innerText = category === "Tümü" ? "Koleksiyonumuzdaki tüm esansları keşfedin." : `${category} kategorisindeki esanslar listeleniyor.`;
                     document.querySelector('.category-btn.bg-indigo-50')?.classList.remove('bg-indigo-50', 'text-indigo-700', 'font-bold');
                     e.currentTarget.classList.add('bg-indigo-50', 'text-indigo-700', 'font-bold');
                     renderProducts(category);
@@ -178,9 +174,8 @@
 
         function renderProducts(category) {
             let productsToDisplay = [...allProducts];
-
             if (category === "Popüler") {
-                productsToDisplay.sort((a,b) => (b.totalDemand || 0) - (a.totalDemand || 0));
+                productsToDisplay.sort((a, b) => (b.totalDemand || 0) - (a.totalDemand || 0));
             } else if (category !== "Tümü") {
                 productsToDisplay = productsToDisplay.filter(p => p.category === category);
             }
@@ -190,50 +185,60 @@
                 return;
             }
 
-            productGridEl.innerHTML = productsToDisplay.map(product => `
-                <div data-product-id="${product.id}" class="product-card bg-white rounded-lg shadow-lg overflow-hidden flex flex-col transform hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer">
+            productGridEl.innerHTML = productsToDisplay.map(product => {
+                const quota = product.quota || 500;
+                const totalDemand = product.totalDemand || 0;
+                const percentage = Math.min((totalDemand / quota) * 100, 100);
+
+                return `
+                <div data-product-id="${product.id}" class="product-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col transform hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 cursor-pointer border border-slate-200">
                     <div class="relative">
-                        <img src="${product.imageUrl || 'https://via.placeholder.com/400'}" alt="${product.name}" class="w-full h-48 object-cover">
+                        <img src="${product.imageUrl || 'https://via.placeholder.com/400'}" alt="${product.name}" class="w-full h-52 object-cover">
                     </div>
-                    <div class="p-4 flex flex-col flex-grow">
-                        <p class="text-indigo-600 text-xs font-bold uppercase">${product.category}</p>
+                    <div class="p-5 flex flex-col flex-grow">
+                        <p class="text-indigo-600 text-xs font-bold uppercase tracking-wider">${product.category}</p>
                         <h3 class="font-bold text-lg my-1 flex-grow">${product.name}</h3>
-                        <p class="text-gray-900 font-black text-2xl mb-3">${product.price} TL</p>
-                        <button data-product-id="${product.id}" data-product-name="${product.name}" data-product-price="${product.price}" class="add-to-cart-btn mt-auto w-full py-2 px-4 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors z-10">
-                            Sepete Ekle
-                        </button>
+                        <div class="mt-2 mb-4">
+                            <div class="flex justify-between text-xs text-slate-500 mb-1">
+                                <span>${totalDemand}gr</span>
+                                <span>Hedef: ${quota}gr</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2.5">
+                                <div class="bg-gradient-to-r from-green-400 to-blue-500 h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+                        <p class="text-gray-900 font-black text-2xl mt-auto">${product.unitPrice} TL <span class="text-sm font-normal text-slate-500">/ 25gr</span></p>
                     </div>
-                </div>
-            `).join('');
+                </div>`
+            }).join('');
             
             addProductCardListeners();
-            addCartButtonListeners();
         }
 
         function getCart() { return JSON.parse(localStorage.getItem('esanscim_cart')) || []; }
         function saveCart(cart) { localStorage.setItem('esanscim_cart', JSON.stringify(cart)); updateCartCount(); }
         function updateCartCount() { cartCountEl.innerText = getCart().reduce((s, i) => s + i.quantity, 0); }
         
-        function addToCart(productId, productName, productPrice) {
+        function addToCart(product, selectedGram, calculatedPrice) {
             const cart = getCart();
-            const item = cart.find(i => i.id === productId);
-            if (item) {
-                item.quantity++;
+            const cartItem = { 
+                id: `${product.id}_${selectedGram}`, 
+                productId: product.id,
+                name: `${product.name} (${selectedGram}gr)`,
+                price: calculatedPrice,
+                quantity: 1,
+                gram: selectedGram,
+                imageUrl: product.imageUrl
+            };
+            
+            const existingItem = cart.find(i => i.id === cartItem.id);
+            if (existingItem) {
+                existingItem.quantity++;
             } else {
-                cart.push({ id: productId, name: productName, price: parseFloat(productPrice), quantity: 1 });
+                cart.push(cartItem);
             }
             saveCart(cart);
-            alert(`'${productName}' sepete eklendi!`);
-        }
-
-        function addCartButtonListeners() {
-            document.querySelectorAll('.add-to-cart-btn').forEach(button => {
-                button.addEventListener('click', e => {
-                    e.stopPropagation();
-                    const { productId, productName, productPrice } = e.currentTarget.dataset;
-                    addToCart(productId, productName, productPrice);
-                });
-            });
+            alert(`'${cartItem.name}' sepete eklendi!`);
         }
         
         function openProductModal(productId) {
@@ -244,14 +249,37 @@
             modalCategory.innerText = product.category || 'Kategori Yok';
             modalName.innerText = product.name || 'İsimsiz Ürün';
             modalDescription.innerText = product.description || 'Bu ürün için bir açıklama girilmemiştir.';
-            modalGrammage.innerText = product.grammage || 'Belirtilmemiş';
-            modalDelivery.innerText = product.deliveryTime || '2-4 iş günü';
-            modalPrice.innerText = `${product.price} TL`;
+            modalPrice.textContent = '-- TL';
+            modalAddToCartBtn.disabled = true;
+            modalAddToCartBtn.textContent = 'Gramaj Seçin';
 
-            modalAddToCartBtn.dataset.productId = product.id;
-            modalAddToCartBtn.dataset.productName = product.name;
-            modalAddToCartBtn.dataset.productPrice = product.price;
+            modalGramOptions.innerHTML = GRAM_OPTIONS.map(gram => 
+                `<button class="gram-btn px-4 py-2 border rounded-lg hover:bg-indigo-100" data-gram="${gram}">${gram}gr</button>`
+            ).join('');
 
+            let selectedGram = 0;
+
+            modalGramOptions.querySelectorAll('.gram-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    modalGramOptions.querySelectorAll('.gram-btn').forEach(b => b.classList.remove('selected'));
+                    e.currentTarget.classList.add('selected');
+                    selectedGram = parseInt(e.currentTarget.dataset.gram);
+                    
+                    const calculatedPrice = (product.unitPrice / 25) * selectedGram;
+                    modalPrice.textContent = `${calculatedPrice.toFixed(2)} TL`;
+                    modalAddToCartBtn.disabled = false;
+                    modalAddToCartBtn.textContent = 'Sepete Ekle';
+                });
+            });
+            
+            modalAddToCartBtn.onclick = () => {
+                if(selectedGram > 0) {
+                    const calculatedPrice = (product.unitPrice / 25) * selectedGram;
+                    addToCart(product, selectedGram, calculatedPrice);
+                    closeProductModal();
+                }
+            };
+            
             modalEl.classList.remove('hidden');
             setTimeout(() => {
                 modalEl.classList.add('opacity-100');
@@ -270,25 +298,13 @@
         function setupModalListeners() {
             modalCloseBtn.addEventListener('click', closeProductModal);
             modalEl.addEventListener('click', (e) => {
-                if (e.target === modalEl) {
-                    closeProductModal();
-                }
-            });
-            modalAddToCartBtn.addEventListener('click', e => {
-                const { productId, productName, productPrice } = e.currentTarget.dataset;
-                addToCart(productId, productName, productPrice);
-                closeProductModal();
+                if (e.target === modalEl) closeProductModal();
             });
         }
 
         function addProductCardListeners() {
             document.querySelectorAll('.product-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    if (e.target.closest('.add-to-cart-btn')) return;
-                    
-                    const productId = card.dataset.productId;
-                    openProductModal(productId);
-                });
+                card.addEventListener('click', () => openProductModal(card.dataset.productId));
             });
         }
 
