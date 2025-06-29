@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +8,8 @@
     <style>
         /* Header'ın scroll yaparken gölgesinin daha yumuşak gelmesi için */
         header { transition: box-shadow 0.3s ease-in-out; }
+        /* Mobil menü için geçiş animasyonu */
+        #mobile-menu { transition: max-height 0.3s ease-out; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -15,66 +17,105 @@
     <!-- HEADER -->
     <header id="main-header" class="bg-white/80 backdrop-blur-md sticky top-0 z-30">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-bold tracking-wider">ESANSCIM</a>
-            <div id="nav-links" class="hidden md:flex items-center space-x-6">
-                <a href="index.html" class="font-semibold text-indigo-600">Ana Sayfa</a>
+            <a href="index.html" class="text-2xl font-bold tracking-wider text-gray-900">ESANSCIM</a>
+            
+            <!-- Masaüstü Menüsü -->
+            <div class="hidden md:flex items-center space-x-8 text-sm font-medium">
+                <a href="index.html" class="text-indigo-600 font-semibold">Ana Sayfa</a>
                 <a href="urunler.html" class="text-gray-600 hover:text-indigo-600">Esanslar</a>
-                <!-- <a href="hakkimizda.html" class="text-gray-600 hover:text-indigo-600">Hakkımızda</a> -->
+                <a href="gizlilik-politikasi.html" class="text-gray-600 hover:text-indigo-600">Gizlilik Politikası</a>
             </div>
+            
+            <!-- Kullanıcı Aksiyonları -->
             <div id="user-actions" class="flex items-center space-x-4">
-                <!-- JS ile dolacak: Giriş yapılmışsa "Profilim", yapılmamışsa "Giriş Yap" -->
+                <!-- JS ile dolacak -->
+            </div>
+
+            <!-- Mobil Menü Butonu -->
+            <div class="md:hidden">
+                <button id="menu-button" class="text-gray-800 focus:outline-none">
+                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
             </div>
         </nav>
+        <!-- Mobil Açılır Menü -->
+        <div id="mobile-menu" class="max-h-0 overflow-hidden md:hidden bg-white border-t">
+            <a href="index.html" class="block py-3 px-6 text-sm font-semibold text-indigo-600">Ana Sayfa</a>
+            <a href="urunler.html" class="block py-3 px-6 text-sm text-gray-700 hover:bg-gray-50">Esanslar</a>
+            <a href="gizlilik-politikasi.html" class="block py-3 px-6 text-sm text-gray-700 hover:bg-gray-50">Gizlilik Politikası</a>
+        </div>
     </header>
 
     <main>
         <!-- HERO BÖLÜMÜ -->
-        <section class="relative h-[60vh] flex items-center justify-center text-white text-center px-4" style="background: url('public/parfum-banner.png') no-repeat center center; background-size: cover;">
-            <div class="absolute inset-0 bg-black/50"></div> <!-- Karartma efekti -->
+        <section class="relative h-[70vh] flex items-center justify-center text-white text-center px-4" style="background: url('public/parfum-banner.png') no-repeat center center; background-size: cover;">
+            <div class="absolute inset-0 bg-black/60"></div>
             <div class="relative z-10">
-                <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight">Kolektif Güçle Lükse Ulaşın</h1>
-                <p class="mt-4 text-lg md:text-xl max-w-2xl mx-auto">Beğendiğiniz niş parfümlere, grup alım avantajıyla çok daha uygun fiyatlara sahip olun.</p>
-                <a href="urunler.html" class="mt-8 inline-block bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg text-lg hover:bg-indigo-700 transition-transform hover:scale-105">
+                <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight drop-shadow-lg">Kolektif Güçle Lükse Ulaşın</h1>
+                <p class="mt-4 text-lg md:text-xl max-w-3xl mx-auto drop-shadow-md">Beğendiğiniz niş parfümlere, grup alım avantajıyla çok daha uygun fiyatlara sahip olun.</p>
+                <a href="urunler.html" class="mt-8 inline-block bg-indigo-600 text-white font-bold py-3 px-10 rounded-full text-lg shadow-lg hover:bg-indigo-700 transition-transform hover:scale-105">
                     Esansları Keşfet
                 </a>
             </div>
         </section>
 
-        <!-- DUYURU BÖLÜMÜ (Admin panelinden aktif edilince görünecek) -->
-        <div id="announcement-section" class="hidden container mx-auto px-6 py-4 -mt-8 relative z-20"></div>
+        <!-- DUYURU BÖLÜMÜ -->
+        <div id="announcement-section" class="hidden container mx-auto px-6 py-4 -mt-12 relative z-20"></div>
 
         <!-- ÖNE ÇIKAN ÜRÜNLER -->
-        <section class="container mx-auto px-6 py-16">
-            <h2 class="text-3xl font-bold text-center mb-8">Öne Çıkanlar</h2>
+        <section class="container mx-auto px-6 py-20">
+            <h2 class="text-3xl font-bold text-center mb-12">Öne Çıkanlar</h2>
             <div id="featured-products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                 <!-- Öne çıkan ürün kartları JS ile buraya yüklenecek -->
             </div>
         </section>
-
     </main>
 
     <!-- FOOTER -->
-    <footer class="bg-gray-800 text-gray-300 py-8">
-        <div class="container mx-auto px-6 text-center">
-            <p>© 2024 ESANSCIM. Tüm hakları saklıdır.</p>
+    <footer class="bg-gray-900 text-gray-400">
+        <div class="container mx-auto px-6 py-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+                <div>
+                    <h3 class="font-bold text-white text-lg mb-2">ESANSCIM</h3>
+                    <p class="text-sm">Kolektif alımın gücüyle, lüks parfümlere ulaşmanın en akıllı yolu.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-lg mb-2">Hızlı Linkler</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="urunler.html" class="hover:text-indigo-400">Tüm Esanslar</a></li>
+                        <li><a href="profile.html" class="hover:text-indigo-400">Profilim</a></li>
+                        <li><a href="login.html" class="hover:text-indigo-400">Giriş Yap / Üye Ol</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-lg mb-2">Yasal</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="gizlilik-politikasi.html" class="hover:text-indigo-400">Gizlilik Politikası</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-sm">
+                <p>© 2024 ESANSCIM. Tüm hakları saklıdır.</p>
+            </div>
         </div>
     </footer>
 
 
     <!-- JAVASCRIPT BÖLÜMÜ -->
     <script type="module">
+        // Firebase importları ve ayarları burada aynı kalacak...
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
-        apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA",
-        authDomain: "esanscim.firebaseapp.com",
-        projectId: "esanscim",
-        storageBucket: "esanscim.firebasestorage.app",
-        messagingSenderId: "570763360884",
-        appId: "1:570763360884:web:47562ad20c047b9defaf21",
-        };
+  apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA",
+  authDomain: "esanscim.firebaseapp.com",
+  projectId: "esanscim",
+  storageBucket: "esanscim.firebasestorage.app",
+  messagingSenderId: "570763360884",
+  appId: "1:570763360884:web:47562ad20c047b9defaf21" 
+};
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -82,86 +123,74 @@
         const userActionsEl = document.getElementById('user-actions');
         const announcementSectionEl = document.getElementById('announcement-section');
         const featuredProductsGridEl = document.getElementById('featured-products-grid');
+        const menuButton = document.getElementById('menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mainHeader = document.getElementById('main-header');
 
-        // 1. KULLANICI GİRİŞ DURUMUNU KONTROL ET
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // Kullanıcı giriş yapmış
-                userActionsEl.innerHTML = `
-                    <a href="profile.html" class="text-gray-600 hover:text-indigo-600">${user.displayName || 'Profilim'}</a>
-                    <button id="logout-btn" class="text-sm text-red-500 hover:underline">Çıkış Yap</button>
-                `;
-                document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+        menuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('max-h-0');
+            mobileMenu.classList.toggle('max-h-96');
+        });
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 10) {
+                mainHeader.classList.add('shadow-lg');
             } else {
-                // Kullanıcı giriş yapmamış
-                userActionsEl.innerHTML = `
-                    <a href="login.html" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md hover:bg-gray-700">Giriş Yap / Üye Ol</a>
-                `;
+                mainHeader.classList.remove('shadow-lg');
             }
         });
 
-        // 2. SİTE AYARLARINI (DUYURU) ÇEK
-        async function loadSiteSettings() {
-            const settingsDocRef = doc(db, 'siteSettings', 'config');
-            const docSnap = await getDoc(settingsDocRef);
-
-            if (docSnap.exists() && docSnap.data().announcement?.isEnabled) {
-                const announcement = docSnap.data().announcement;
-                announcementSectionEl.innerHTML = `
-                    <div class="bg-white p-6 rounded-lg shadow-xl border border-indigo-200">
-                        <h3 class="text-xl font-bold text-indigo-700">${announcement.title}</h3>
-                        <p class="mt-2 text-gray-600">${announcement.message}</p>
-                    </div>
-                `;
-                announcementSectionEl.classList.remove('hidden');
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userActionsEl.innerHTML = `
+                    <a href="profile.html" class="text-sm font-medium text-gray-700 hover:text-indigo-600">${user.displayName || 'Profilim'}</a>
+                    <button id="logout-btn" class="text-sm font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
+                document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+            } else {
+                userActionsEl.innerHTML = `<a href="login.html" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md hover:bg-gray-700">Giriş Yap</a>`;
             }
+        });
+
+        async function loadSiteSettings() {
+             const settingsDocRef = doc(db, 'siteSettings', 'config');
+             const docSnap = await getDoc(settingsDocRef);
+             if (docSnap.exists() && docSnap.data().announcement?.isEnabled) {
+                 const announcement = docSnap.data().announcement;
+                 announcementSectionEl.innerHTML = `<div class="bg-white p-6 rounded-lg shadow-xl border"><h3 class="text-xl font-bold text-indigo-700">${announcement.title}</h3><p class="mt-2 text-gray-600">${announcement.message}</p></div>`;
+                 announcementSectionEl.classList.remove('hidden');
+             }
         }
         
-        // 3. ÖNE ÇIKAN ÜRÜNLERİ ÇEK
+        
         async function loadFeaturedProducts() {
-            // "Temin süresi yaklaşanlar" mantığıyla ilk 4 ürünü çekelim
-            const productsQuery = query(
-                collection(db, "products"), 
-                orderBy("totalDemand", "desc"), 
-                limit(4)
-            );
+            const productsQuery = query(collection(db, "products"), orderBy("totalDemand", "desc"), limit(4));
             const productsSnapshot = await getDocs(productsQuery);
-            
             if (productsSnapshot.empty) {
-                featuredProductsGridEl.innerHTML = '<p class="col-span-full text-center">Şu anda öne çıkan ürün yok.</p>';
+                featuredProductsGridEl.innerHTML = `<p class="col-span-full text-center">Şu anda öne çıkan ürün yok.</p>`;
                 return;
             }
-            
             featuredProductsGridEl.innerHTML = productsSnapshot.docs.map(doc => {
                 const product = { id: doc.id, ...doc.data() };
                 const quota = product.quota || 500;
                 const totalDemand = product.totalDemand || 0;
                 const percentage = Math.min((totalDemand / quota) * 100, 100);
-
                 return `
                 <a href="urun-detay.html?id=${product.id}" class="group block bg-white rounded-xl shadow-md overflow-hidden transform hover:-translate-y-2 transition-all duration-300">
-                    <div class="relative w-full h-56">
-                        <img src="${product.imageUrl || ''}" alt="${product.name}" class="w-full h-full object-cover"/>
-                    </div>
+                    <div class="relative w-full h-56"><img src="${product.imageUrl || 'https://via.placeholder.com/400'}" alt="${product.name}" class="w-full h-full object-cover"/></div>
                     <div class="p-5">
                         <p class="text-xs font-semibold text-indigo-500 uppercase">${product.category}</p>
                         <h3 class="text-lg font-bold text-gray-800 truncate mt-1">${product.name}</h3>
                         <div class="mt-4">
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" style="width: ${percentage}%"></div>
-                            </div>
-                            <p class="text-xs text-center text-gray-500 mt-1">${totalDemand}gr / ${quota}gr toplandı</p>
+                            <div class="flex justify-between text-xs text-gray-500 mb-1"><span>${totalDemand}gr toplandı</span><span>Hedef: ${quota}gr</span></div>
+                            <div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" style="width: ${percentage}%"></div></div>
                         </div>
                     </div>
-                </a>
-                `;
+                </a>`;
             }).join('');
         }
 
-        // Sayfa yüklendiğinde tüm fonksiyonları çalıştır
         loadSiteSettings();
         loadFeaturedProducts();
-
     </script>
 </body>
 </html>
