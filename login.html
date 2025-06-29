@@ -83,7 +83,14 @@
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     
-    const firebaseConfig = { /* Kendi Firebase config bilgilerin buraya */ };
+    const firebaseConfig = {
+  apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA",
+  authDomain: "esanscim.firebaseapp.com",
+  projectId: "esanscim",
+  storageBucket: "esanscim.firebasestorage.app",
+  messagingSenderId: "570763360884",
+  appId: "1:570763360884:web:47562ad20c047b9defaf21",
+};
     
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
