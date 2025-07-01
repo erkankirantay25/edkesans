@@ -74,6 +74,8 @@
                 <h2 id="modal-name" class="text-3xl font-bold text-gray-900 mt-1 mb-3"></h2>
                 <p id="modal-description" class="text-gray-600 mb-4 flex-grow"></p>
                 
+                <div id="buyers-queue-container" class="mb-4"></div>
+
                 <div class="mb-4">
                     <h4 class="font-semibold text-gray-700 mb-2">Gramaj Seçin:</h4>
                     <div id="modal-gram-options" class="flex flex-wrap gap-2">
@@ -93,7 +95,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, getDocs, query, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, orderBy, doc, getDoc, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA",
@@ -109,9 +111,10 @@
         const db = getFirestore(app);
 
         let allProducts = [];
+        let currentUser = null;
+        let currentUserData = null;
         const CATEGORIES = ["Tümü", "Kadın", "Erkek", "Unisex", "Popüler"];
-        const GRAM_OPTIONS = [25, 50, 75, 100, 150, 200, 250];
-
+        
         const pageTitleEl = document.getElementById('page-title');
         const pageDescriptionEl = document.getElementById('page-description');
         const categoryListEl = document.getElementById('category-list');
@@ -120,7 +123,6 @@
         const userActionsEl = document.getElementById('user-actions');
         const menuButton = document.getElementById('menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
-
         const modalEl = document.getElementById('product-modal');
         const modalContentEl = document.getElementById('modal-content');
         const modalCloseBtn = document.getElementById('modal-close-btn');
@@ -131,10 +133,12 @@
         const modalGramOptions = document.getElementById('modal-gram-options');
         const modalPrice = document.getElementById('modal-price');
         const modalAddToCartBtn = document.getElementById('modal-add-to-cart-btn');
+        const buyersQueueContainer = document.getElementById('buyers-queue-container');
 
         async function initializePage() {
             renderSkeletonCards(9);
-            const productsSnapshot = await getDocs(query(collection(db, "products"), orderBy("name")));
+            const q = query(collection(db, "products"), where("isActive", "==", true), orderBy("name"));
+            const productsSnapshot = await getDocs(q);
             allProducts = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             renderCategories();
             renderProducts("Tümü");
@@ -173,7 +177,7 @@
         }
 
         function renderProducts(category) {
-            let productsToDisplay = [...allProducts];
+            let productsToDisplay = allProducts.filter(p => p.isActive);
             if (category === "Popüler") {
                 productsToDisplay.sort((a, b) => (b.totalDemand || 0) - (a.totalDemand || 0));
             } else if (category !== "Tümü") {
@@ -207,7 +211,7 @@
                                 <div class="bg-gradient-to-r from-green-400 to-blue-500 h-2.5 rounded-full" style="width: ${percentage}%"></div>
                             </div>
                         </div>
-                        <p class="text-gray-900 font-black text-2xl mt-auto">${product.unitPrice} TL <span class="text-sm font-normal text-slate-500">/ 25gr</span></p>
+                        <p class="text-gray-900 font-black text-2xl mt-auto">${product.unitPrice} TL <span class="text-sm font-normal text-slate-500">/ 50gr</span></p>
                     </div>
                 </div>`
             }).join('');
@@ -241,6 +245,23 @@
             alert(`'${cartItem.name}' sepete eklendi!`);
         }
         
+        function renderBuyerQueue(product) {
+            const buyers = product.buyers || [];
+            if (buyers.length === 0) {
+                buyersQueueContainer.innerHTML = '';
+                return;
+            }
+            
+            let queueHtml = `<div class="border-t pt-4"><h4 class="font-semibold text-gray-700 mb-2">Sipariş Sırası (${buyers.length}):</h4><div class="text-sm space-y-1 max-h-24 overflow-y-auto">`;
+            buyers.forEach((buyer, index) => {
+                const isCurrentUser = currentUser && currentUserData && buyer.userCode === currentUserData.userCode;
+                const userCodeDisplay = isCurrentUser ? buyer.userCode : '***';
+                queueHtml += `<p class="text-gray-600">${index + 1}. Sıra: ${userCodeDisplay}</p>`;
+            });
+            queueHtml += '</div></div>';
+            buyersQueueContainer.innerHTML = queueHtml;
+        }
+
         function openProductModal(productId) {
             const product = allProducts.find(p => p.id === productId);
             if (!product) return;
@@ -252,8 +273,10 @@
             modalPrice.textContent = '-- TL';
             modalAddToCartBtn.disabled = true;
             modalAddToCartBtn.textContent = 'Gramaj Seçin';
+            renderBuyerQueue(product);
 
-            modalGramOptions.innerHTML = GRAM_OPTIONS.map(gram => 
+            const gramOptions = product.activeGrams || [50, 100, 150, 200, 250];
+            modalGramOptions.innerHTML = gramOptions.map(gram => 
                 `<button class="gram-btn px-4 py-2 border rounded-lg hover:bg-indigo-100" data-gram="${gram}">${gram}gr</button>`
             ).join('');
 
@@ -265,7 +288,7 @@
                     e.currentTarget.classList.add('selected');
                     selectedGram = parseInt(e.currentTarget.dataset.gram);
                     
-                    const calculatedPrice = (product.unitPrice / 25) * selectedGram;
+                    const calculatedPrice = (product.unitPrice / 50) * selectedGram;
                     modalPrice.textContent = `${calculatedPrice.toFixed(2)} TL`;
                     modalAddToCartBtn.disabled = false;
                     modalAddToCartBtn.textContent = 'Sepete Ekle';
@@ -274,7 +297,7 @@
             
             modalAddToCartBtn.onclick = () => {
                 if(selectedGram > 0) {
-                    const calculatedPrice = (product.unitPrice / 25) * selectedGram;
+                    const calculatedPrice = (product.unitPrice / 50) * selectedGram;
                     addToCart(product, selectedGram, calculatedPrice);
                     closeProductModal();
                 }
@@ -311,19 +334,27 @@
         onAuthStateChanged(auth, async (user) => {
             const cartIconHTML = userActionsEl.querySelector('a[href="sepet.html"]').outerHTML;
             let authHTML = '';
+            currentUser = user;
             
             if (user) {
                 const userDocRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userDocRef);
                 let userLinks = '';
                 
-                if (userDoc.exists() && userDoc.data().role === 'admin') {
-                    userLinks = `<a href="admin.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Admin Paneli</a>`;
+                if (userDoc.exists()) {
+                    currentUserData = userDoc.data();
+                    if (currentUserData.role === 'admin') {
+                        userLinks = `<a href="admin.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Admin Paneli</a>`;
+                    } else {
+                        userLinks = `<a href="profile.html" class="text-sm font-medium text-gray-700 hover:text-indigo-600">${user.displayName || 'Profilim'}</a>`;
+                    }
                 } else {
-                    userLinks = `<a href="profile.html" class="text-sm font-medium text-gray-700 hover:text-indigo-600">${user.displayName || 'Profilim'}</a>`;
+                     userLinks = `<a href="profile.html" class="text-sm font-medium text-gray-700 hover:text-indigo-600">${user.displayName || 'Profilim'}</a>`;
                 }
+                
                 authHTML = userLinks + `<button id="logout-btn" class="text-sm font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
             } else {
+                currentUserData = null;
                 authHTML = `<a href="login.html" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md hover:bg-gray-700">Giriş Yap</a>`;
             }
             userActionsEl.innerHTML = authHTML + cartIconHTML;
