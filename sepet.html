@@ -141,23 +141,42 @@
         };
         
         const updateCheckoutButtonState = () => { const isAddressAvailable = userData && userData.address && userData.address.trim() !== ''; checkoutButton.disabled = !agreementCheckbox.checked || !isAddressAvailable || !selectedShippingCarrier; };
-        const handleShippingSelection = (event) => { const carrierName = event.target.value; selectedShippingCarrier = activeShippingCarriers.find(c => c.name === carrierName) || null; renderSummary(); };
-        const renderAddress = () => { if (!userData?.address) { addressContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Teslimat Adresi</h2><p class="text-red-500 text-sm">Siparişe devam etmek için kayıtlı bir teslimat adresiniz olmalıdır.</p><a href="profile.html" class="mt-2 inline-block text-indigo-600 hover:underline text-sm font-semibold">Profil Sayfasından Adres Ekle →</a>`; } else { addressContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Teslimat Adresi</h2><div class="border rounded-md p-3 bg-gray-50"><p class="font-semibold text-sm">Kayıtlı Adresim</p><p class="text-gray-600 text-sm whitespace-pre-wrap">${userData.address}</p></div><div class="mt-4"><label class="flex items-center"><input type="checkbox" id="billing-same-as-shipping" checked class="h-4 w-4 text-indigo-600 border-gray-300 rounded"><span class="ml-2 text-sm text-gray-700">Fatura adresim, teslimat adresimle aynı.</span></label></div>`; } };
+        
+        const handleShippingSelection = (event) => { 
+            const carrierName = event.target.value; 
+            selectedShippingCarrier = activeShippingCarriers.find(c => c.name === carrierName) || null; 
+            renderSummary(); 
+        };
+
+        const renderAddress = () => { 
+            if (!userData?.address) { 
+                addressContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Teslimat Adresi</h2><p class="text-red-500 text-sm">Siparişe devam etmek için kayıtlı bir teslimat adresiniz olmalıdır.</p><a href="profile.html" class="mt-2 inline-block text-indigo-600 hover:underline text-sm font-semibold">Profil Sayfasından Adres Ekle →</a>`; 
+            } else { 
+                addressContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Teslimat Adresi</h2><div class="border rounded-md p-3 bg-gray-50"><p class="font-semibold text-sm">Kayıtlı Adresim</p><p class="text-gray-600 text-sm whitespace-pre-wrap">${userData.address}</p></div><div class="mt-4"><label class="flex items-center"><input type="checkbox" id="billing-same-as-shipping" checked class="h-4 w-4 text-indigo-600 border-gray-300 rounded"><span class="ml-2 text-sm text-gray-700">Fatura adresim, teslimat adresimle aynı.</span></label></div>`; 
+            } 
+        };
         
         const renderShippingOptions = () => {
             if (activeShippingCarriers.length === 0) {
                 shippingOptionsContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Kargo Seçimi</h2><p class="text-sm text-gray-500">Aktif kargo seçeneği bulunamadı.</p>`;
+                selectedShippingCarrier = null;
                 return;
             }
-            shippingOptionsContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Kargo Seçimi</h2><div class="space-y-2">${activeShippingCarriers.map(carrier => `
+            shippingOptionsContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Kargo Seçimi</h2><div class="space-y-2">${activeShippingCarriers.map((carrier, index) => `
                 <label class="flex items-center justify-between p-3 border rounded-md cursor-pointer hover:bg-gray-50">
                     <div class="flex items-center">
-                        <input type="radio" name="shipping-carrier" value="${carrier.name}" class="h-4 w-4 text-indigo-600 border-gray-300">
+                        <input type="radio" name="shipping-carrier" value="${carrier.name}" id="carrier-${index}" class="h-4 w-4 text-indigo-600 border-gray-300">
                         <span class="ml-3 text-sm font-medium text-gray-800">${carrier.name}</span>
                     </div>
                     <span class="text-sm font-semibold">${carrier.price.toFixed(2)} TL</span>
                 </label>`).join('')}</div>`;
+
             document.querySelectorAll('input[name="shipping-carrier"]').forEach(radio => radio.addEventListener('change', handleShippingSelection));
+            
+            if (activeShippingCarriers.length === 1) {
+                document.getElementById('carrier-0').checked = true;
+                selectedShippingCarrier = activeShippingCarriers[0];
+            }
         };
 
         const renderSummary = () => {
@@ -206,6 +225,7 @@
                     showState(states.authRequired);
                 }
             } catch (error) {
+                console.error("Sepet sayfası yüklenirken hata oluştu:", error);
                 pageContainer.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-md text-center max-w-2xl mx-auto"><h2 class="text-2xl font-bold text-red-600 mb-4">Bir Hata Oluştu</h2><p class="text-gray-600 mb-6">Sayfa yüklenirken beklenmedik bir sorun oluştu. Lütfen daha sonra tekrar deneyin.</p><a href="index.html" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700">Ana Sayfaya Dön</a></div>`;
             }
         });
@@ -227,7 +247,7 @@
 
             for (let i = 0; i < cart.length; i++) {
                 const productData = productsInCart[i];
-                if (productData.quota > (productData.totalDemand || 0)) {
+                if (productData && productData.quota > (productData.totalDemand || 0)) {
                     isAnyItemPendingQuota = true;
                     quotaWarningMessage += `- ${productData.name}\n`;
                 }
@@ -268,7 +288,7 @@
                         totalDemand: increment(totalGramOrdered),
                         buyers: arrayUnion({
                             userId: currentUser.uid,
-                            userCode: userData.userCode || currentUser.uid.substring(0,6),
+                            userCode: userData.userCode || currentUser.uid.substring(0,6).toUpperCase(),
                             timestamp: serverTimestamp()
                         })
                     });
@@ -279,6 +299,7 @@
                 alert('Siparişiniz başarıyla oluşturuldu!');
                 window.location.href = 'profile.html';
              } catch (error) {
+                console.error("Sipariş oluşturma hatası:", error);
                 alert('Sipariş oluşturulurken bir hata oluştu.');
                 checkoutButton.disabled = false;
                 checkoutButton.textContent = 'Ödemeye Geç';
