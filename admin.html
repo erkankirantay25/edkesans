@@ -59,17 +59,27 @@
                     <h2 class="text-xl font-bold mb-4 border-b pb-2">Yeni Ürün Ekle</h2>
                     <form id="add-product-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                          <div><label for="product-name" class="block text-sm font-medium text-gray-700">Ürün Adı</label><input type="text" id="product-name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
-                         <div><label for="product-unit-price" class="block text-sm font-medium text-gray-700">Birim Fiyat (TL / 25gr)</label><input type="number" id="product-unit-price" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                         <div><label for="product-unit-price" class="block text-sm font-medium text-gray-700">Birim Fiyat (TL / 50gr)</label><input type="number" id="product-unit-price" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
                          <div><label for="product-category" class="block text-sm font-medium text-gray-700">Kategori</label><select id="product-category" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"><option>Kadın</option><option>Erkek</option><option>Unisex</option></select></div>
                          <div><label for="product-quota" class="block text-sm font-medium text-gray-700">Kota (gr)</label><input type="number" id="product-quota" value="500" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
                          <div class="md:col-span-2"><label for="product-description" class="block text-sm font-medium text-gray-700">Açıklama</label><textarea id="product-description" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></textarea></div>
-                         <div class="md:col-span-2"><label for="product-image-url" class="block text-sm font-medium text-gray-700">Resim URL (isteğe bağlı)</label><input type="url" id="product-image-url" placeholder="Boş bırakılırsa standart resim kullanılır" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                         <div class="md:col-span-2"><label for="product-image-url" class="block text-sm font-medium text-gray-700">Resim URL</label><input type="url" id="product-image-url" placeholder="https://..." class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
                          <div class="md:col-span-2 flex justify-between items-center"><label for="csv-file-input" class="inline-flex items-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">Excel ile Toplu Yükle</label><input type="file" id="csv-file-input" class="hidden" accept=".csv"><button type="submit" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">Ürünü Ekle</button></div>
                     </form>
                 </section>
-                <section class="bg-white p-6 rounded-lg shadow-md"><h2 class="text-xl font-bold mb-4 border-b pb-2">Mevcut Ürünler</h2><div id="product-list-container" class="overflow-x-auto"></div></section>
+                <section class="bg-white p-6 rounded-lg shadow-md">
+                    <div class="flex flex-wrap gap-4 justify-between items-center mb-4 border-b pb-2">
+                        <h2 class="text-xl font-bold">Mevcut Ürünler</h2>
+                        <div id="bulk-action-container" class="space-x-2">
+                            <button id="bulk-activate-btn" class="py-2 px-4 text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400" disabled>Seçilenleri Aktif Et</button>
+                            <button id="bulk-deactivate-btn" class="py-2 px-4 text-sm font-medium rounded-md text-white bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-400" disabled>Seçilenleri Pasif Yap</button>
+                            <button id="bulk-delete-btn" class="py-2 px-4 text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 disabled:bg-gray-400" disabled>Seçilenleri Sil</button>
+                        </div>
+                    </div>
+                    <div id="product-list-container" class="overflow-x-auto"></div>
+                </section>
             </div>
-
+            
             <div id="tab-orders" class="tab-content"><section class="bg-white p-6 rounded-lg shadow-md"><div class="flex justify-between items-center mb-4 border-b pb-2"><h2 class="text-xl font-bold">Tüm Siparişler</h2><button id="export-all-orders-btn" class="inline-flex items-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Tümünü İndir (CSV)</button></div><div id="order-list-container" class="overflow-x-auto"></div></section></div>
             <div id="tab-users" class="tab-content"><section class="bg-white p-6 rounded-lg shadow-md"><div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold mb-4">Kullanıcılar</h2><input type="text" id="user-search-input" placeholder="Kullanıcı adı veya e-posta ile ara..." class="w-full md:w-1/2 p-2 border border-gray-300 rounded-md"></div><div id="user-list-container" class="overflow-x-auto"></div></section></div>
             <div id="tab-settings" class="tab-content">
@@ -89,7 +99,7 @@
         </main>
     </div>
 
-    <div id="edit-product-modal" class="modal-overlay fixed inset-0 bg-black/60 items-center justify-center p-4 z-50"><div class="modal-content bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-medium text-gray-900">Ürünü Düzenle</h3><button class="close-modal-btn text-gray-400 hover:text-gray-600 text-2xl">×</button></div><form id="edit-product-form" class="p-6 overflow-y-auto"><input type="hidden" id="edit-product-id"><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><label for="edit-product-name">Ürün Adı</label><input type="text" id="edit-product-name" required class="mt-1 block w-full border-gray-300 rounded-md"></div><div><label for="edit-product-unit-price">Birim Fiyat (TL / 25gr)</label><input type="number" id="edit-product-unit-price" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md"></div><div><label for="edit-product-category">Kategori</label><select id="edit-product-category" required class="mt-1 block w-full border-gray-300 rounded-md"><option>Kadın</option><option>Erkek</option><option>Unisex</option></select></div><div><label for="edit-product-quota">Kota (gr)</label><input type="number" id="edit-product-quota" required class="mt-1 block w-full border-gray-300 rounded-md"></div><div class="md:col-span-2"><label for="edit-product-description">Açıklama</label><textarea id="edit-product-description" rows="4" class="mt-1 block w-full border-gray-300 rounded-md"></textarea></div><div class="md:col-span-2"><label for="edit-product-image-url">Resim URL</label><input type="url" id="edit-product-image-url" class="mt-1 block w-full border-gray-300 rounded-md"></div><div class="md:col-span-2"><label>Aktif Gramaj Seçenekleri</label><div id="edit-gram-options" class="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2"></div></div></div><div class="mt-8 pt-5 border-t flex justify-end gap-3"><button type="button" class="cancel-edit-btn py-2 px-4 border rounded-md text-gray-700 bg-white hover:bg-gray-50">İptal</button><button type="submit" class="py-2 px-4 border-transparent rounded-md text-white bg-indigo-600 hover:bg-indigo-700">Değişiklikleri Kaydet</button></div></form></div></div>
+    <div id="edit-product-modal" class="modal-overlay fixed inset-0 bg-black/60 items-center justify-center p-4 z-50"><div class="modal-content bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-medium text-gray-900">Ürünü Düzenle</h3><button class="close-modal-btn text-gray-400 hover:text-gray-600 text-2xl">×</button></div><form id="edit-product-form" class="p-6 overflow-y-auto"><input type="hidden" id="edit-product-id"><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><label for="edit-product-name">Ürün Adı</label><input type="text" id="edit-product-name" required class="mt-1 block w-full border-gray-300 rounded-md"></div><div><label for="edit-product-unit-price">Birim Fiyat (TL / 50gr)</label><input type="number" id="edit-product-unit-price" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md"></div><div><label for="edit-product-category">Kategori</label><select id="edit-product-category" required class="mt-1 block w-full border-gray-300 rounded-md"><option>Kadın</option><option>Erkek</option><option>Unisex</option></select></div><div><label for="edit-product-quota">Kota (gr)</label><input type="number" id="edit-product-quota" required class="mt-1 block w-full border-gray-300 rounded-md"></div><div class="md:col-span-2"><label for="edit-product-description">Açıklama</label><textarea id="edit-product-description" rows="4" class="mt-1 block w-full border-gray-300 rounded-md"></textarea></div><div class="md:col-span-2"><label for="edit-product-image-url">Resim URL</label><input type="url" id="edit-product-image-url" class="mt-1 block w-full border-gray-300 rounded-md"></div><div class="md:col-span-2"><label>Aktif Gramaj Seçenekleri</label><div id="edit-gram-options" class="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2"></div></div></div><div class="mt-8 pt-5 border-t flex justify-end gap-3"><button type="button" class="cancel-edit-btn py-2 px-4 border rounded-md text-gray-700 bg-white hover:bg-gray-50">İptal</button><button type="submit" class="py-2 px-4 border-transparent rounded-md text-white bg-indigo-600 hover:bg-indigo-700">Değişiklikleri Kaydet</button></div></form></div></div>
     <div id="order-details-modal" class="modal-overlay fixed inset-0 bg-black/60 items-center justify-center p-4 z-50"><div class="modal-content bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-medium text-gray-900">Sipariş Detayları</h3><button class="close-modal-btn text-gray-400 hover:text-gray-600 text-2xl">×</button></div><div id="order-details-content" class="p-6 overflow-y-auto"></div></div></div>
     <div id="user-details-modal" class="modal-overlay fixed inset-0 bg-black/60 items-center justify-center p-4 z-50"><div class="modal-content bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col"><div class="p-6 border-b flex justify-between items-center"><h3 class="text-lg font-medium text-gray-900">Kullanıcı Detayları</h3><button class="close-modal-btn text-gray-400 hover:text-gray-600 text-2xl">×</button></div><div id="user-details-content" class="p-6 overflow-y-auto"></div></div></div>
     
@@ -104,9 +114,9 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const DEFAULT_IMAGE_URL = './images/default-esans.png';
-        const ALL_GRAM_OPTIONS = [25, 50, 75, 100, 150, 200, 250];
-        const ORDER_STATUS_OPTIONS = ['Yeni Sipariş', 'Hazırlanıyor', 'Kargolandı', 'Teslim Edildi', 'İptal Edildi'];
+        const DEFAULT_IMAGE_URL = 'https://firebasestorage.googleapis.com/v0/b/esanscim.appspot.com/o/default-esans.png?alt=media&token=42d1844b-4497-4c07-88ca-56543b35583b';
+        const ALL_GRAM_OPTIONS = [50, 100, 150, 200, 250];
+        const ORDER_STATUS_OPTIONS = ['Kota Bekleniyor', 'Yeni Sipariş', 'Hazırlanıyor', 'Kargolandı', 'Teslim Edildi', 'İptal Edildi'];
         
         const ui = {
             adminPanel: document.getElementById('admin-panel'),
@@ -122,7 +132,8 @@
             csvFileInput: document.getElementById('csv-file-input'),
             shipping: { listContainer: document.getElementById('shipping-carrier-list-container'), addForm: document.getElementById('add-shipping-carrier-form'), newNameInput: document.getElementById('new-carrier-name'), newPriceInput: document.getElementById('new-carrier-price') },
             modals: { product: document.getElementById('edit-product-modal'), order: document.getElementById('order-details-modal'), user: document.getElementById('user-details-modal') },
-            forms: { productEdit: document.getElementById('edit-product-form') }
+            forms: { productEdit: document.getElementById('edit-product-form') },
+            bulk: { container: document.getElementById('bulk-action-container'), activateBtn: document.getElementById('bulk-activate-btn'), deactivateBtn: document.getElementById('bulk-deactivate-btn'), deleteBtn: document.getElementById('bulk-delete-btn') },
         };
         let allProducts = [], allOrders = [], allUsers = [], shippingCarriers = [];
 
@@ -135,25 +146,29 @@
             setTimeout(() => notification.classList.remove('show'), 3000);
         };
         
-        const showAccessDenied = () => {
-            ui.adminPanel.style.display = 'none';
-            ui.accessDenied.style.display = 'flex';
-        };
+        const showAccessDenied = () => { ui.adminPanel.style.display = 'none'; ui.accessDenied.style.display = 'flex'; };
+        const closeAllModals = () => { Object.values(ui.modals).forEach(m => m.classList.remove('active')); };
         
-        const closeAllModals = () => {
-            Object.values(ui.modals).forEach(m => m.classList.remove('active'));
+        const updateBulkActionButtons = () => {
+            const selectedCount = document.querySelectorAll('.product-checkbox:checked').length;
+            const enabled = selectedCount > 0;
+            ui.bulk.activateBtn.disabled = !enabled;
+            ui.bulk.deactivateBtn.disabled = !enabled;
+            ui.bulk.deleteBtn.disabled = !enabled;
         };
         
         const renderProducts = () => {
-            let tableHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ürün</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fiyat</th><th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">İşlemler</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
+            let tableHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="p-4"><input type="checkbox" id="select-all-products"></th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ürün</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fiyat</th><th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">İşlemler</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
             if (allProducts.length === 0) {
-                tableHTML += `<tr><td colspan="4" class="text-center py-4">Henüz ürün yok.</td></tr>`;
+                tableHTML += `<tr><td colspan="5" class="text-center py-4">Henüz ürün yok.</td></tr>`;
             } else {
                 allProducts.forEach(p => {
+                    const statusClass = p.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
                     tableHTML += `<tr>
+                        <td class="p-4"><input type="checkbox" class="product-checkbox" data-id="${p.id}"></td>
+                        <td class="px-6 py-4"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">${p.isActive ? 'Aktif' : 'Pasif'}</span></td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${p.name}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${p.category}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${p.unitPrice} TL/25gr</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${p.unitPrice} TL/50gr</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-4">
                             <button class="edit-product-btn text-indigo-600 hover:text-indigo-900" data-id="${p.id}">Düzenle</button>
                             <button class="delete-product-btn text-red-600 hover:text-red-900" data-id="${p.id}">Sil</button>
@@ -163,159 +178,32 @@
             ui.productListContainer.innerHTML = tableHTML + `</tbody></table>`;
             document.querySelectorAll('.edit-product-btn').forEach(b => b.addEventListener('click', (e) => openProductEditModal(e.target.dataset.id)));
             document.querySelectorAll('.delete-product-btn').forEach(b => b.addEventListener('click', (e) => handleDeleteProduct(e.target.dataset.id)));
-        };
-
-        const fetchAndRenderProducts = async () => {
-            const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
-            const snapshot = await getDocs(q);
-            allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderProducts();
-        };
-
-        const handleAddProduct = async (e) => {
-            e.preventDefault();
-            const newProduct = { name: document.getElementById('product-name').value, unitPrice: parseFloat(document.getElementById('product-unit-price').value), category: document.getElementById('product-category').value, quota: parseInt(document.getElementById('product-quota').value), imageUrl: document.getElementById('product-image-url').value || DEFAULT_IMAGE_URL, description: document.getElementById('product-description').value, activeGrams: ALL_GRAM_OPTIONS, totalDemand: 0, createdAt: serverTimestamp() };
-            try {
-                await addDoc(collection(db, "products"), newProduct);
-                showNotification('Ürün başarıyla eklendi!', 'success');
-                ui.addProductForm.reset();
-                document.getElementById('product-quota').value = '500';
-                fetchAndRenderProducts();
-            } catch (error) { showNotification('Hata: Ürün eklenemedi.', 'error'); }
-        };
-
-        const handleEditProduct = async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('edit-product-id').value;
-            const activeGrams = Array.from(document.querySelectorAll('.gram-option-checkbox:checked')).map(cb => parseInt(cb.value));
-            const imageUrlValue = document.getElementById('edit-product-image-url').value;
-            const updatedData = { name: document.getElementById('edit-product-name').value, unitPrice: parseFloat(document.getElementById('edit-product-unit-price').value), category: document.getElementById('edit-product-category').value, quota: parseInt(document.getElementById('edit-product-quota').value), description: document.getElementById('edit-product-description').value, imageUrl: imageUrlValue.trim() || DEFAULT_IMAGE_URL, activeGrams: activeGrams };
-            try {
-                await updateDoc(doc(db, "products", id), updatedData);
-                showNotification('Ürün başarıyla güncellendi!', 'success');
-                closeAllModals();
-                fetchAndRenderProducts();
-            } catch (error) { showNotification('Hata: Ürün güncellenemedi.', 'error'); }
-        };
-
-        const handleDeleteProduct = async (id) => {
-            if (confirm('Bu ürünü silmek istediğinizden emin misiniz?')) {
-                try {
-                    await deleteDoc(doc(db, "products", id));
-                    showNotification('Ürün silindi.', 'success');
-                    fetchAndRenderProducts();
-                } catch { showNotification('Hata: Ürün silinemedi.', 'error'); }
-            }
-        };
-
-        const openProductEditModal = (productId) => {
-            const product = allProducts.find(p => p.id === productId);
-            if (!product) return;
-            document.getElementById('edit-product-id').value = product.id;
-            document.getElementById('edit-product-name').value = product.name;
-            document.getElementById('edit-product-unit-price').value = product.unitPrice;
-            document.getElementById('edit-product-category').value = product.category;
-            document.getElementById('edit-product-quota').value = product.quota;
-            document.getElementById('edit-product-description').value = product.description || '';
-            document.getElementById('edit-product-image-url').value = product.imageUrl === DEFAULT_IMAGE_URL ? '' : product.imageUrl;
-            const activeGrams = product.activeGrams || ALL_GRAM_OPTIONS;
-            document.getElementById('edit-gram-options').innerHTML = ALL_GRAM_OPTIONS.map(gram => `<label class="flex items-center space-x-2"><input type="checkbox" value="${gram}" class="gram-option-checkbox h-4 w-4 text-indigo-600 rounded" ${activeGrams.includes(gram) ? 'checked' : ''}><span class="text-sm">${gram}gr</span></label>`).join('');
-            ui.modals.product.classList.add('active');
-        };
-
-        const handleCsvUpload = (event) => {
-            const file = event.target.files[0]; if (!file) return;
-            Papa.parse(file, { header: true, skipEmptyLines: true, complete: async (results) => {
-                if(results.errors.length > 0) { showNotification('CSV dosyasında hata var.', 'error'); return; }
-                const batch = writeBatch(db);
-                results.data.forEach(row => { const productRef = doc(collection(db, "products")); batch.set(productRef, { name: row.name, unitPrice: parseFloat(row.unitPrice), category: row.category, quota: parseInt(row.quota) || 500, description: row.description || '', imageUrl: row.imageUrl || DEFAULT_IMAGE_URL, activeGrams: ALL_GRAM_OPTIONS, totalDemand: 0, createdAt: serverTimestamp() }); });
-                try { await batch.commit(); showNotification(`${results.data.length} ürün başarıyla eklendi.`, 'success'); fetchAndRenderProducts(); } catch (error) { showNotification('Toplu ürün eklenirken hata oluştu.', 'error'); }
-            }});
-            event.target.value = '';
-        };
-
-        const renderOrders = () => {
-            let tableHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sipariş ID</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Müşteri</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tarih</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tutar</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th><th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase"></th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
-            if (allOrders.length === 0) tableHTML += `<tr><td colspan="6" class="text-center py-4">Henüz sipariş yok.</td></tr>`;
-            else allOrders.forEach(o => { const date = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString('tr-TR') : 'Bilinmiyor'; tableHTML += `<tr><td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">${o.id.substring(0,8)}...</td><td class="px-4 py-4 text-sm font-medium text-gray-900">${o.customerInfo.name}</td><td class="px-4 py-4 text-sm text-gray-500">${date}</td><td class="px-4 py-4 text-sm font-semibold">${o.totalAmount.toFixed(2)} TL</td><td class="px-4 py-4 text-sm">${o.status}</td><td class="px-4 py-4 text-right text-sm font-medium"><button class="open-order-details-btn text-indigo-600 hover:text-indigo-900" data-id="${o.id}">Detaylar</button></td></tr>`; });
-            ui.orderListContainer.innerHTML = tableHTML + `</tbody></table>`;
-            document.querySelectorAll('.open-order-details-btn').forEach(b => b.addEventListener('click', (e) => openOrderDetailsModal(e.target.dataset.id)));
-        };
-        const fetchAndRenderOrders = async () => { const q = query(collection(db, "orders"), orderBy("createdAt", "desc")); const snapshot = await getDocs(q); allOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderOrders(); };
-        const openOrderDetailsModal = (orderId) => {
-            const order = allOrders.find(o => o.id === orderId); if (!order) return;
-            const contentEl = document.getElementById('order-details-content');
-            contentEl.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"><div><h4 class="font-bold">Müşteri Bilgileri</h4><p>${order.customerInfo.name}<br>${order.customerInfo.email}<br>${order.customerInfo.phone || 'Telefon yok'}</p></div><div><h4 class="font-bold">Teslimat Bilgileri</h4><p>${order.shippingCarrier}<br><span class="whitespace-pre-wrap">${order.shippingAddress}</span></p></div></div><h4 class="font-bold mb-2">Sipariş İçeriği</h4><div class="border rounded-md mb-6">${order.items.map(item => `<div class="p-2 border-b last:border-0 flex justify-between items-center"><span>${item.quantity} x ${item.name} (${item.gram}gr)</span><span>${(item.price * item.quantity).toFixed(2)} TL</span></div>`).join('')}</div><div class="text-right space-y-1 mb-6"><p>Ara Toplam: ${order.subtotalAmount.toFixed(2)} TL</p><p>Kargo: ${order.shippingAmount.toFixed(2)} TL</p><p class="font-bold text-lg">Toplam: ${order.totalAmount.toFixed(2)} TL</p></div><div class="flex flex-wrap justify-between items-center gap-4 pt-4 border-t"><div class="flex items-center gap-2"><label for="order-status-select" class="font-bold">Durum:</label><select id="order-status-select" class="p-2 border rounded-md">${ORDER_STATUS_OPTIONS.map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select><button id="update-status-btn" class="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Kaydet</button></div><button id="export-single-order-btn" class="py-2 px-4 bg-gray-600 text-white rounded-md hover:bg-gray-700">Bu Siparişi İndir</button></div>`;
-            ui.modals.order.classList.add('active');
-            document.getElementById('update-status-btn').addEventListener('click', () => handleUpdateOrderStatus(orderId, document.getElementById('order-status-select').value));
-            document.getElementById('export-single-order-btn').addEventListener('click', () => exportOrdersToCSV([order]));
-        };
-        const handleUpdateOrderStatus = async (orderId, newStatus) => { try { await updateDoc(doc(db, "orders", orderId), { status: newStatus }); showNotification('Sipariş durumu güncellendi.', 'success'); const orderIndex = allOrders.findIndex(o => o.id === orderId); if(orderIndex > -1) allOrders[orderIndex].status = newStatus; renderOrders(); closeAllModals(); } catch (error) { showNotification('Durum güncellenemedi.', 'error'); } };
-        const exportOrdersToCSV = (ordersToExport) => {
-            if (ordersToExport.length === 0) { showNotification('İndirilecek sipariş yok.', 'error'); return; }
-            const csvData = ordersToExport.flatMap(order => order.items.map(item => ({ SiparisID: order.id, MusteriAdi: order.customerInfo.name, Email: order.customerInfo.email, Telefon: order.customerInfo.phone, Adres: order.shippingAddress.replace(/(\r\n|\n|\r)/gm, " "), KargoFirmasi: order.shippingCarrier, SiparisTarihi: order.createdAt?.toDate().toISOString() || '', UrunAdi: item.name, Gramaj: item.gram, Adet: item.quantity, BirimFiyat: item.price, ToplamTutar: order.totalAmount, SiparisDurumu: order.status })));
-            const csv = Papa.unparse(csvData);
-            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `siparisler-${new Date().toISOString().split('T')[0]}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        };
-        
-        const renderUsers = (searchTerm = '') => {
-            const filteredUsers = searchTerm ? allUsers.filter(u => u.name?.toLowerCase().includes(searchTerm) || u.email?.toLowerCase().includes(searchTerm)) : allUsers;
-            let tableHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ad Soyad</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">E-posta</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th><th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase"></th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
-            if (filteredUsers.length === 0) tableHTML += `<tr><td colspan="4" class="text-center py-4">Kullanıcı bulunamadı.</td></tr>`;
-            else filteredUsers.forEach(u => { tableHTML += `<tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${u.name || 'Belirtilmemiş'}</td><td class="px-6 py-4 text-sm text-gray-500">${u.email}</td><td class="px-6 py-4 text-sm capitalize">${u.role || 'user'}</td><td class="px-6 py-4 text-right text-sm font-medium"><button class="open-user-details-btn text-indigo-600 hover:text-indigo-900" data-id="${u.id}">Detaylar</button></td></tr>`; });
-            ui.userListContainer.innerHTML = tableHTML + `</tbody></table>`;
-            document.querySelectorAll('.open-user-details-btn').forEach(b => b.addEventListener('click', (e) => openUserDetailsModal(e.target.dataset.id)));
-        };
-        const fetchAndRenderUsers = async () => { const snapshot = await getDocs(collection(db, "users")); allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderUsers(); };
-        const openUserDetailsModal = async (userId) => {
-            const user = allUsers.find(u => u.id === userId); if (!user) return;
-            const contentEl = document.getElementById('user-details-content');
-            contentEl.innerHTML = `<div class="text-center p-8">Kullanıcı siparişleri yükleniyor...</div>`;
-            ui.modals.user.classList.add('active');
-            try {
-                const q = query(collection(db, "orders"), where("userId", "==", userId));
-                const ordersSnapshot = await getDocs(q);
-                let userOrders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                userOrders.sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
-                contentEl.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"><div><h4 class="font-bold">Kullanıcı Bilgileri</h4><p>${user.name}<br>${user.email}<br>${user.phone || 'Telefon yok'}</p></div><div><h4 class="font-bold">Kayıtlı Adres</h4><p class="whitespace-pre-wrap">${user.address || 'Adres yok'}</p></div></div><h4 class="font-bold mb-2 border-t pt-4">Sipariş Geçmişi (${userOrders.length})</h4><div class="space-y-2 max-h-64 overflow-y-auto">${userOrders.length > 0 ? userOrders.map(order => `<div class="p-2 border rounded-md flex justify-between items-center text-sm"><span>${order.createdAt.toDate().toLocaleDateString('tr-TR')} - ${order.id.substring(0,8)}...</span><span class="font-semibold">${order.totalAmount.toFixed(2)} TL</span><span>${order.status}</span></div>`).join('') : '<p>Bu kullanıcının siparişi bulunmuyor.</p>'}</div>`;
-            } catch(error) {
-                contentEl.innerHTML = `<div class="text-center p-8 text-red-500">Siparişler yüklenirken bir hata oluştu.</div>`;
-                console.error("Error fetching user orders:", error);
-            }
-        };
-        
-        const renderShippingCarriers = () => {
-            let tableHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Firma Adı</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fiyat</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th><th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">İşlemler</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`;
-            if (shippingCarriers.length === 0) tableHTML += `<tr><td colspan="4" class="text-center py-4">Kargo firması eklenmemiş.</td></tr>`;
-            else shippingCarriers.forEach((carrier, index) => {
-                tableHTML += `<tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${carrier.name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <input type="number" step="0.01" value="${carrier.price.toFixed(2)}" class="shipping-price-input w-24 p-1 border rounded-md" data-index="${index}">
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                            <input type="checkbox" id="toggle-${index}" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" ${carrier.active ? 'checked' : ''} data-index="${index}">
-                            <label for="toggle-${index}" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
-                        </div>
-                        <span class="text-xs font-medium">${carrier.active ? 'Aktif' : 'Pasif'}</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        <button class="save-carrier-btn text-indigo-600 hover:text-indigo-900" data-index="${index}">Kaydet</button>
-                        <button class="delete-carrier-btn text-red-600 hover:text-red-900" data-index="${index}">Sil</button>
-                    </td></tr>`;
+            document.querySelectorAll('.product-checkbox').forEach(cb => cb.addEventListener('change', updateBulkActionButtons));
+            document.getElementById('select-all-products').addEventListener('change', (e) => {
+                document.querySelectorAll('.product-checkbox').forEach(cb => cb.checked = e.target.checked);
+                updateBulkActionButtons();
             });
-            ui.shipping.listContainer.innerHTML = tableHTML + `</tbody></table>`;
-            document.querySelectorAll('.toggle-checkbox').forEach(b => b.addEventListener('change', (e) => handleToggleCarrierStatus(e.target.dataset.index)));
-            document.querySelectorAll('.save-carrier-btn').forEach(b => b.addEventListener('click', (e) => handleSaveCarrierPrice(e.target.dataset.index)));
-            document.querySelectorAll('.delete-carrier-btn').forEach(b => b.addEventListener('click', (e) => handleDeleteCarrier(e.target.dataset.index)));
         };
+
+        const fetchAndRenderProducts = async () => { const q = query(collection(db, "products"), orderBy("createdAt", "desc")); const snapshot = await getDocs(q); allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderProducts(); };
+        const handleAddProduct = async (e) => { e.preventDefault(); const newProduct = { name: document.getElementById('product-name').value, unitPrice: parseFloat(document.getElementById('product-unit-price').value), category: document.getElementById('product-category').value, quota: parseInt(document.getElementById('product-quota').value), imageUrl: document.getElementById('product-image-url').value || DEFAULT_IMAGE_URL, description: document.getElementById('product-description').value, activeGrams: ALL_GRAM_OPTIONS, totalDemand: 0, buyers: [], isActive: true, createdAt: serverTimestamp() }; try { await addDoc(collection(db, "products"), newProduct); showNotification('Ürün başarıyla eklendi!', 'success'); ui.addProductForm.reset(); document.getElementById('product-quota').value = '500'; fetchAndRenderProducts(); } catch (error) { showNotification('Hata: Ürün eklenemedi.', 'error'); } };
+        const handleEditProduct = async (e) => { e.preventDefault(); const id = document.getElementById('edit-product-id').value; const activeGrams = Array.from(document.querySelectorAll('.gram-option-checkbox:checked')).map(cb => parseInt(cb.value)); const imageUrlValue = document.getElementById('edit-product-image-url').value; const updatedData = { name: document.getElementById('edit-product-name').value, unitPrice: parseFloat(document.getElementById('edit-product-unit-price').value), category: document.getElementById('edit-product-category').value, quota: parseInt(document.getElementById('edit-product-quota').value), description: document.getElementById('edit-product-description').value, imageUrl: imageUrlValue.trim() || DEFAULT_IMAGE_URL, activeGrams: activeGrams }; try { await updateDoc(doc(db, "products", id), updatedData); showNotification('Ürün başarıyla güncellendi!', 'success'); closeAllModals(); fetchAndRenderProducts(); } catch (error) { showNotification('Hata: Ürün güncellenemedi.', 'error'); } };
+        const handleDeleteProduct = async (id) => { if (confirm('Bu ürünü silmek istediğinizden emin misiniz?')) { try { await deleteDoc(doc(db, "products", id)); showNotification('Ürün silindi.', 'success'); fetchAndRenderProducts(); } catch { showNotification('Hata: Ürün silinemedi.', 'error'); } } };
+        const openProductEditModal = (productId) => { const product = allProducts.find(p => p.id === productId); if (!product) return; document.getElementById('edit-product-id').value = product.id; document.getElementById('edit-product-name').value = product.name; document.getElementById('edit-product-unit-price').value = product.unitPrice; document.getElementById('edit-product-category').value = product.category; document.getElementById('edit-product-quota').value = product.quota; document.getElementById('edit-product-description').value = product.description || ''; document.getElementById('edit-product-image-url').value = product.imageUrl === DEFAULT_IMAGE_URL ? '' : product.imageUrl; const activeGrams = product.activeGrams || ALL_GRAM_OPTIONS; document.getElementById('edit-gram-options').innerHTML = ALL_GRAM_OPTIONS.map(gram => `<label class="flex items-center space-x-2"><input type="checkbox" value="${gram}" class="gram-option-checkbox h-4 w-4 text-indigo-600 rounded" ${activeGrams.includes(gram) ? 'checked' : ''}><span class="text-sm">${gram}gr</span></label>`).join(''); ui.modals.product.classList.add('active'); };
+        const handleCsvUpload = (event) => { const file = event.target.files[0]; if (!file) return; Papa.parse(file, { header: true, skipEmptyLines: true, complete: async (results) => { if(results.errors.length > 0) { showNotification('CSV dosyasında hata var.', 'error'); return; } const batch = writeBatch(db); results.data.forEach(row => { const productRef = doc(collection(db, "products")); batch.set(productRef, { name: row.name, unitPrice: parseFloat(row.unitPrice), category: row.category, quota: parseInt(row.quota) || 500, description: row.description || '', imageUrl: row.imageUrl || DEFAULT_IMAGE_URL, activeGrams: ALL_GRAM_OPTIONS, totalDemand: 0, buyers: [], isActive: true, createdAt: serverTimestamp() }); }); try { await batch.commit(); showNotification(`${results.data.length} ürün başarıyla eklendi.`, 'success'); fetchAndRenderProducts(); } catch (error) { showNotification('Toplu ürün eklenirken hata oluştu.', 'error'); } }}); event.target.value = ''; };
+        const handleBulkAction = async (action) => { const selectedIds = Array.from(document.querySelectorAll('.product-checkbox:checked')).map(cb => cb.dataset.id); if (selectedIds.length === 0) return; if (action === 'delete' && !confirm(`${selectedIds.length} ürünü silmek istediğinizden emin misiniz?`)) return; const batch = writeBatch(db); selectedIds.forEach(id => { const docRef = doc(db, "products", id); if (action === 'delete') { batch.delete(docRef); } else if (action === 'activate') { batch.update(docRef, { isActive: true }); } else if (action === 'deactivate') { batch.update(docRef, { isActive: false }); } }); try { await batch.commit(); showNotification(`${selectedIds.length} ürün başarıyla işlendi.`, 'success'); fetchAndRenderProducts(); updateBulkActionButtons(); } catch (error) { showNotification('Toplu işlem sırasında hata oluştu.', 'error'); } };
+        
+        const renderOrders = () => { let tableHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sipariş ID</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Müşteri</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tarih</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tutar</th><th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th><th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase"></th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`; if (allOrders.length === 0) tableHTML += `<tr><td colspan="6" class="text-center py-4">Henüz sipariş yok.</td></tr>`; else allOrders.forEach(o => { const date = o.createdAt?.toDate ? o.createdAt.toDate().toLocaleDateString('tr-TR') : 'Bilinmiyor'; tableHTML += `<tr><td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">${o.id.substring(0,8)}...</td><td class="px-4 py-4 text-sm font-medium text-gray-900">${o.customerInfo.name}</td><td class="px-4 py-4 text-sm text-gray-500">${date}</td><td class="px-4 py-4 text-sm font-semibold">${o.totalAmount.toFixed(2)} TL</td><td class="px-4 py-4 text-sm">${o.status}</td><td class="px-4 py-4 text-right text-sm font-medium"><button class="open-order-details-btn text-indigo-600 hover:text-indigo-900" data-id="${o.id}">Detaylar</button></td></tr>`; }); ui.orderListContainer.innerHTML = tableHTML + `</tbody></table>`; document.querySelectorAll('.open-order-details-btn').forEach(b => b.addEventListener('click', (e) => openOrderDetailsModal(e.target.dataset.id))); };
+        const fetchAndRenderOrders = async () => { const q = query(collection(db, "orders"), orderBy("createdAt", "desc")); const snapshot = await getDocs(q); allOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderOrders(); };
+        const openOrderDetailsModal = (orderId) => { const order = allOrders.find(o => o.id === orderId); if (!order) return; const contentEl = document.getElementById('order-details-content'); contentEl.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"><div><h4 class="font-bold">Müşteri Bilgileri</h4><p>${order.customerInfo.name}<br>${order.customerInfo.email}<br>${order.customerInfo.phone || 'Telefon yok'}</p></div><div><h4 class="font-bold">Teslimat Bilgileri</h4><p>${order.shippingCarrier.name}<br><span class="whitespace-pre-wrap">${order.shippingAddress}</span></p></div></div><h4 class="font-bold mb-2">Sipariş İçeriği</h4><div class="border rounded-md mb-6">${order.items.map(item => `<div class="p-2 border-b last:border-0 flex justify-between items-center"><span>${item.quantity} x ${item.name} (${item.gram}gr)</span><span>${(item.price * item.quantity).toFixed(2)} TL</span></div>`).join('')}</div><div class="text-right space-y-1 mb-6"><p>Ara Toplam: ${order.subtotalAmount.toFixed(2)} TL</p><p>Kargo: ${order.shippingCarrier.price.toFixed(2)} TL</p><p class="font-bold text-lg">Toplam: ${order.totalAmount.toFixed(2)} TL</p></div><div class="flex flex-wrap justify-between items-center gap-4 pt-4 border-t"><div class="flex items-center gap-2"><label for="order-status-select" class="font-bold">Durum:</label><select id="order-status-select" class="p-2 border rounded-md">${ORDER_STATUS_OPTIONS.map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}</select></div><div class="flex items-center gap-2 flex-grow"><label for="tracking-code-input" class="font-bold">Kargo Kodu:</label><input type="text" id="tracking-code-input" value="${order.trackingCode || ''}" class="p-2 border rounded-md flex-grow"></div><button id="update-order-btn" class="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Kaydet</button></div>`; ui.modals.order.classList.add('active'); document.getElementById('update-order-btn').addEventListener('click', () => handleUpdateOrder(orderId, document.getElementById('order-status-select').value, document.getElementById('tracking-code-input').value)); };
+        const handleUpdateOrder = async (orderId, newStatus, trackingCode) => { try { await updateDoc(doc(db, "orders", orderId), { status: newStatus, trackingCode: trackingCode || null }); showNotification('Sipariş durumu güncellendi.', 'success'); const orderIndex = allOrders.findIndex(o => o.id === orderId); if(orderIndex > -1) { allOrders[orderIndex].status = newStatus; allOrders[orderIndex].trackingCode = trackingCode; } renderOrders(); closeAllModals(); } catch (error) { showNotification('Durum güncellenemedi.', 'error'); } };
+        const exportOrdersToCSV = (ordersToExport) => { if (ordersToExport.length === 0) { showNotification('İndirilecek sipariş yok.', 'error'); return; } const csvData = ordersToExport.flatMap(order => order.items.map(item => ({ SiparisID: order.id, MusteriAdi: order.customerInfo.name, Email: order.customerInfo.email, Telefon: order.customerInfo.phone, Adres: order.shippingAddress.replace(/(\r\n|\n|\r)/gm, " "), KargoFirmasi: order.shippingCarrier.name, SiparisTarihi: order.createdAt?.toDate().toISOString() || '', UrunAdi: item.name, Gramaj: item.gram, Adet: item.quantity, BirimFiyat: item.price, ToplamTutar: order.totalAmount, SiparisDurumu: order.status, KargoKodu: order.trackingCode || '' }))); const csv = Papa.unparse(csvData); const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `siparisler-${new Date().toISOString().split('T')[0]}.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link); };
+        
+        const renderUsers = (searchTerm = '') => { const filteredUsers = searchTerm ? allUsers.filter(u => u.name?.toLowerCase().includes(searchTerm) || u.email?.toLowerCase().includes(searchTerm)) : allUsers; let tableHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ad Soyad</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">E-posta</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th><th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase"></th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`; if (filteredUsers.length === 0) tableHTML += `<tr><td colspan="4" class="text-center py-4">Kullanıcı bulunamadı.</td></tr>`; else filteredUsers.forEach(u => { tableHTML += `<tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${u.name || 'Belirtilmemiş'}</td><td class="px-6 py-4 text-sm text-gray-500">${u.email}</td><td class="px-6 py-4 text-sm capitalize">${u.role || 'user'}</td><td class="px-6 py-4 text-right text-sm font-medium"><button class="open-user-details-btn text-indigo-600 hover:text-indigo-900" data-id="${u.id}">Detaylar</button></td></tr>`; }); ui.userListContainer.innerHTML = tableHTML + `</tbody></table>`; document.querySelectorAll('.open-user-details-btn').forEach(b => b.addEventListener('click', (e) => openUserDetailsModal(e.target.dataset.id))); };
+        const fetchAndRenderUsers = async () => { const snapshot = await getDocs(collection(db, "users")); allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderUsers(); };
+        const openUserDetailsModal = async (userId) => { const user = allUsers.find(u => u.id === userId); if (!user) return; const contentEl = document.getElementById('user-details-content'); contentEl.innerHTML = `<div class="text-center p-8">Kullanıcı siparişleri yükleniyor...</div>`; ui.modals.user.classList.add('active'); try { const q = query(collection(db, "orders"), where("userId", "==", userId), orderBy("createdAt", "desc")); const ordersSnapshot = await getDocs(q); let userOrders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); contentEl.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6"><div><h4 class="font-bold">Kullanıcı Bilgileri</h4><p>${user.name}<br>${user.email}<br>${user.phone || 'Telefon yok'}</p></div><div><h4 class="font-bold">Kayıtlı Adres</h4><p class="whitespace-pre-wrap">${user.address || 'Adres yok'}</p></div></div><h4 class="font-bold mb-2 border-t pt-4">Sipariş Geçmişi (${userOrders.length})</h4><div class="space-y-2 max-h-64 overflow-y-auto">${userOrders.length > 0 ? userOrders.map(order => `<div class="p-2 border rounded-md flex justify-between items-center text-sm"><span>${order.createdAt.toDate().toLocaleDateString('tr-TR')} - ${order.id.substring(0,8)}...</span><span class="font-semibold">${order.totalAmount.toFixed(2)} TL</span><span>${order.status}</span></div>`).join('') : '<p>Bu kullanıcının siparişi bulunmuyor.</p>'}</div>`; } catch(error) { contentEl.innerHTML = `<div class="text-center p-8 text-red-500">Siparişler yüklenirken bir hata oluştu.</div>`; } };
+        
+        const renderShippingCarriers = () => { let tableHTML = `<table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Firma Adı</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fiyat</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th><th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">İşlemler</th></tr></thead><tbody class="bg-white divide-y divide-gray-200">`; if (shippingCarriers.length === 0) tableHTML += `<tr><td colspan="4" class="text-center py-4">Kargo firması eklenmemiş.</td></tr>`; else shippingCarriers.forEach((carrier, index) => { tableHTML += `<tr> <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${carrier.name}</td> <td class="px-6 py-4 whitespace-nowrap text-sm"> <input type="number" step="0.01" value="${carrier.price.toFixed(2)}" class="shipping-price-input w-24 p-1 border rounded-md" data-index="${index}"> </td> <td class="px-6 py-4 whitespace-nowrap text-sm"> <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in"> <input type="checkbox" id="toggle-${index}" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" ${carrier.active ? 'checked' : ''} data-index="${index}"> <label for="toggle-${index}" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label> </div> <span class="text-xs font-medium">${carrier.active ? 'Aktif' : 'Pasif'}</span> </td> <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2"> <button class="save-carrier-btn text-indigo-600 hover:text-indigo-900" data-index="${index}">Kaydet</button> <button class="delete-carrier-btn text-red-600 hover:text-red-900" data-index="${index}">Sil</button> </td></tr>`; }); ui.shipping.listContainer.innerHTML = tableHTML + `</tbody></table>`; document.querySelectorAll('.toggle-checkbox').forEach(b => b.addEventListener('change', (e) => handleToggleCarrierStatus(e.target.dataset.index))); document.querySelectorAll('.save-carrier-btn').forEach(b => b.addEventListener('click', (e) => handleSaveCarrierPrice(e.target.dataset.index))); document.querySelectorAll('.delete-carrier-btn').forEach(b => b.addEventListener('click', (e) => handleDeleteCarrier(e.target.dataset.index))); };
         const fetchAndRenderShippingSettings = async () => { const docRef = doc(db, "settings", "shippingOptions"); const docSnap = await getDoc(docRef); shippingCarriers = docSnap.exists() && Array.isArray(docSnap.data().carriers) ? docSnap.data().carriers : []; renderShippingCarriers(); };
         const updateShippingCarriersInDB = async () => { try { await setDoc(doc(db, "settings", "shippingOptions"), { carriers: shippingCarriers }); renderShippingCarriers(); } catch (error) { showNotification('Kargo ayarları güncellenirken hata oluştu.', 'error'); } };
         const handleAddCarrier = async (e) => { e.preventDefault(); const newName = ui.shipping.newNameInput.value.trim(); const newPrice = parseFloat(ui.shipping.newPriceInput.value); if (newName && !isNaN(newPrice) && !shippingCarriers.some(c => c.name === newName)) { shippingCarriers.push({ name: newName, price: newPrice, active: true }); await updateShippingCarriersInDB(); showNotification('Kargo firması eklendi.', 'success'); ui.shipping.addForm.reset(); } else { showNotification('Geçersiz veya mevcut firma adı.', 'error'); } };
@@ -323,53 +211,11 @@
         const handleSaveCarrierPrice = async (index) => { if(shippingCarriers[index]) { const newPrice = parseFloat(document.querySelector(`.shipping-price-input[data-index="${index}"]`).value); if(!isNaN(newPrice)) { shippingCarriers[index].price = newPrice; await updateShippingCarriersInDB(); showNotification('Fiyat güncellendi.', 'success'); } else { showNotification('Geçersiz fiyat değeri.', 'error'); } } };
         const handleDeleteCarrier = async (index) => { if(shippingCarriers[index] && confirm(`'${shippingCarriers[index].name}' firmasını silmek istediğinizden emin misiniz?`)) { shippingCarriers.splice(index, 1); await updateShippingCarriersInDB(); showNotification('Firma silindi.', 'success'); } };
         
-        const setupTabs = () => {
-            document.querySelectorAll('.tab-btn').forEach(button => { button.addEventListener('click', (e) => { const tabName = e.currentTarget.dataset.tab; document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); e.currentTarget.classList.add('active'); document.querySelectorAll('.tab-content').forEach(content => { content.classList.toggle('active', content.id === `tab-${tabName}`); }); }); });
-        };
+        const setupTabs = () => { document.querySelectorAll('.tab-btn').forEach(button => { button.addEventListener('click', (e) => { const tabName = e.currentTarget.dataset.tab; document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); e.currentTarget.classList.add('active'); document.querySelectorAll('.tab-content').forEach(content => { content.classList.toggle('active', content.id === `tab-${tabName}`); }); }); }); };
+        const setupEventListeners = () => { ui.logoutBtn.addEventListener('click', () => signOut(auth)); ui.addProductForm.addEventListener('submit', handleAddProduct); ui.csvFileInput.addEventListener('change', handleCsvUpload); ui.forms.productEdit.addEventListener('submit', handleEditProduct); document.querySelectorAll('.close-modal-btn, .cancel-edit-btn').forEach(btn => btn.addEventListener('click', () => closeAllModals())); ui.exportAllOrdersBtn.addEventListener('click', () => exportOrdersToCSV(allOrders)); ui.userSearchInput.addEventListener('input', (e) => renderUsers(e.target.value.toLowerCase())); ui.shipping.addForm.addEventListener('submit', handleAddCarrier); ui.bulk.activateBtn.addEventListener('click', () => handleBulkAction('activate')); ui.bulk.deactivateBtn.addEventListener('click', () => handleBulkAction('deactivate')); ui.bulk.deleteBtn.addEventListener('click', () => handleBulkAction('delete')); };
+        const initializeAdminPanel = async (user) => { ui.adminPanel.style.display = 'block'; ui.adminUserEmail.textContent = user.email; setupTabs(); setupEventListeners(); await Promise.all([ fetchAndRenderProducts(), fetchAndRenderOrders(), fetchAndRenderUsers(), fetchAndRenderShippingSettings() ]); };
         
-        const setupEventListeners = () => {
-            ui.logoutBtn.addEventListener('click', () => signOut(auth));
-            ui.addProductForm.addEventListener('submit', handleAddProduct);
-            ui.csvFileInput.addEventListener('change', handleCsvUpload);
-            ui.forms.productEdit.addEventListener('submit', handleEditProduct);
-            document.querySelectorAll('.close-modal-btn, .cancel-edit-btn').forEach(btn => btn.addEventListener('click', () => closeAllModals()));
-            ui.exportAllOrdersBtn.addEventListener('click', () => exportOrdersToCSV(allOrders));
-            ui.userSearchInput.addEventListener('input', (e) => renderUsers(e.target.value.toLowerCase()));
-            ui.shipping.addForm.addEventListener('submit', handleAddCarrier);
-        };
-        
-        const initializeAdminPanel = async (user) => {
-            ui.adminPanel.style.display = 'block';
-            ui.adminUserEmail.textContent = user.email;
-            setupTabs();
-            setupEventListeners();
-            await Promise.all([
-                fetchAndRenderProducts(),
-                fetchAndRenderOrders(),
-                fetchAndRenderUsers(),
-                fetchAndRenderShippingSettings()
-            ]);
-        };
-        
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                try {
-                    const userDoc = await getDoc(doc(db, "users", user.uid));
-                    if (userDoc.exists() && userDoc.data().role === 'admin') {
-                        initializeAdminPanel(user);
-                    } else {
-                        signOut(auth); 
-                        showAccessDenied();
-                    }
-                } catch(error) {
-                    console.error("Authentication check failed:", error);
-                    showAccessDenied();
-                }
-            } else {
-                showAccessDenied();
-            }
-        });
-
+        onAuthStateChanged(auth, async (user) => { if (user) { try { const userDoc = await getDoc(doc(db, "users", user.uid)); if (userDoc.exists() && userDoc.data().role === 'admin') { initializeAdminPanel(user); } else { signOut(auth); showAccessDenied(); } } catch(error) { showAccessDenied(); } } else { showAccessDenied(); } });
     </script>
 </body>
 </html>
