@@ -51,11 +51,23 @@
                                     <div class="flex justify-between"><span class="text-gray-600">Kargo Ücreti</span><span id="summary-shipping" class="font-medium"></span></div>
                                 </div>
                                 <div class="flex justify-between font-bold text-lg mt-4 border-t pt-4"><span>Genel Toplam</span><span id="summary-total"></span></div>
-                                <div class="mt-6 space-y-3">
+                                
+                                <div id="agreements-container" class="mt-6 space-y-3 border-t pt-4">
                                     <label class="flex items-start cursor-pointer">
-                                        <input type="checkbox" id="agreement-checkbox" class="h-4 w-4 mt-1 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                                        <span class="ml-2 text-xs text-gray-600">Ön Bilgilendirme Formunu ve Mesafeli Satış Sözleşmesini okudum, onaylıyorum.</span>
+                                        <input type="checkbox" name="agreement" class="agreement-checkbox h-4 w-4 mt-1 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                        <span class="ml-2 text-xs text-gray-600"><a href="kullanim-kosullari.html" target="_blank" class="text-indigo-600 hover:underline font-medium">Kullanım Koşullarını</a> okudum, onaylıyorum.</span>
                                     </label>
+                                    <label class="flex items-start cursor-pointer">
+                                        <input type="checkbox" name="agreement" class="agreement-checkbox h-4 w-4 mt-1 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                        <span class="ml-2 text-xs text-gray-600"><a href="mesafeli-satis-sozlesmesi.html" target="_blank" class="text-indigo-600 hover:underline font-medium">Mesafeli Satış Sözleşmesini</a> okudum, onaylıyorum.</span>
+                                    </label>
+                                    <label class="flex items-start cursor-pointer">
+                                        <input type="checkbox" name="agreement" class="agreement-checkbox h-4 w-4 mt-1 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                        <span class="ml-2 text-xs text-gray-600"><a href="gizlilik-politikasi.html" target="_blank" class="text-indigo-600 hover:underline font-medium">Gizlilik Politikası ve KVKK Aydınlatma Metnini</a> okudum, onaylıyorum.</span>
+                                    </label>
+                                </div>
+
+                                <div class="mt-6">
                                     <button id="checkout-button" disabled class="w-full px-6 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">Ödemeye Geç</button>
                                 </div>
                             </div>
@@ -90,7 +102,7 @@
         const shippingOptionsContainer = document.getElementById('shipping-options-container');
         const summary = { subtotal: document.getElementById('summary-subtotal'), shipping: document.getElementById('summary-shipping'), total: document.getElementById('summary-total') };
         const checkoutButton = document.getElementById('checkout-button');
-        const agreementCheckbox = document.getElementById('agreement-checkbox');
+        const agreementCheckboxes = document.querySelectorAll('.agreement-checkbox');
 
         let cart = [];
         let currentUser = null;
@@ -140,7 +152,11 @@
             document.querySelectorAll('.remove-btn').forEach(btn => btn.onclick = (e) => removeItem(e.currentTarget.dataset.id));
         };
         
-        const updateCheckoutButtonState = () => { const isAddressAvailable = userData && userData.address && userData.address.trim() !== ''; checkoutButton.disabled = !agreementCheckbox.checked || !isAddressAvailable || !selectedShippingCarrier; };
+        const updateCheckoutButtonState = () => { 
+            const isAddressAvailable = userData && userData.address && userData.address.trim() !== '';
+            const allAgreementsChecked = Array.from(agreementCheckboxes).every(cb => cb.checked);
+            checkoutButton.disabled = !allAgreementsChecked || !isAddressAvailable || !selectedShippingCarrier; 
+        };
         
         const handleShippingSelection = (event) => { 
             const carrierName = event.target.value; 
@@ -230,7 +246,7 @@
             }
         });
         
-        agreementCheckbox.addEventListener('change', updateCheckoutButtonState);
+        agreementCheckboxes.forEach(checkbox => checkbox.addEventListener('change', updateCheckoutButtonState));
         
         checkoutButton.addEventListener('click', async () => {
             const subtotal = cart.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
