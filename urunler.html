@@ -12,6 +12,7 @@
         .modal-overlay { transition: opacity 0.3s ease-in-out; }
         .modal-content { transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; }
         .gram-btn.selected { background-color: #4f46e5; color: white; }
+        #notification-popup { transition: opacity 0.3s, transform 0.3s; }
     </style>
 </head>
 <body class="bg-slate-50">
@@ -104,10 +105,15 @@
             </div>
         </div>
     </div>
+    
+    <div id="notification-popup" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white py-3 px-6 rounded-lg shadow-lg opacity-0 transform translate-y-full z-50">
+        Sepete eklendi!
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, getDocs, query, orderBy, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -139,6 +145,8 @@
         const userActionsEl = document.getElementById('user-actions');
         const menuButton = document.getElementById('menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
+        const notificationPopup = document.getElementById('notification-popup');
+
         const modalEl = document.getElementById('product-modal');
         const modalContentEl = document.getElementById('modal-content');
         const modalCloseBtn = document.getElementById('modal-close-btn');
@@ -150,6 +158,20 @@
         const modalPrice = document.getElementById('modal-price');
         const modalAddToCartBtn = document.getElementById('modal-add-to-cart-btn');
         const buyersQueueContainer = document.getElementById('buyers-queue-container');
+
+        function showNotification(message) {
+            notificationPopup.textContent = message;
+            notificationPopup.classList.remove('hidden', 'opacity-0', 'translate-y-full');
+            notificationPopup.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                notificationPopup.classList.remove('opacity-100', 'translate-y-0');
+                notificationPopup.classList.add('opacity-0', 'translate-y-full');
+                setTimeout(() => {
+                    notificationPopup.classList.add('hidden');
+                }, 300);
+            }, 2500);
+        }
 
         async function initializePage() {
             renderSkeletonCards(9);
@@ -280,7 +302,7 @@
                 cart.push(cartItem);
             }
             saveCart(cart);
-            alert(`'${cartItem.name}' sepete eklendi!`);
+            showNotification(`'${cartItem.name}' sepete eklendi!`);
         }
         
         function renderBuyerQueue(product) {
@@ -372,43 +394,48 @@
                 });
             });
         }
-
-        onAuthStateChanged(auth, async (user) => {
-            const cartIconHTML = userActionsEl.querySelector('a[href="sepet.html"]').outerHTML;
-            let authHTML = '';
-            currentUser = user;
-            
-            if (user) {
-                const userDocRef = doc(db, "users", user.uid);
-                const userDoc = await getDoc(userDocRef);
-                let userLinks = '';
-                
-                if (userDoc.exists()) {
-                    currentUserData = userDoc.data();
-                    if (currentUserData.role === 'admin') {
-                        userLinks = `<a href="admin.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Admin Paneli</a>`;
+        
+        setPersistence(auth, browserLocalPersistence)
+            .then(() => {
+                onAuthStateChanged(auth, async (user) => {
+                    const cartIconHTML = userActionsEl.querySelector('a[href="sepet.html"]').outerHTML;
+                    let authHTML = '';
+                    currentUser = user;
+                    
+                    if (user) {
+                        const userDocRef = doc(db, "users", user.uid);
+                        const userDoc = await getDoc(userDocRef);
+                        let userLinks = '';
+                        
+                        if (userDoc.exists()) {
+                            currentUserData = userDoc.data();
+                            if (currentUserData.role === 'admin') {
+                                userLinks = `<a href="admin.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Admin Paneli</a>`;
+                            } else {
+                                userLinks = `<a href="profile.html" class="text-sm font-medium text-gray-700 hover:text-indigo-600">${user.displayName || 'Profilim'}</a>`;
+                            }
+                        } else {
+                             userLinks = `<a href="profile.html" class="text-sm font-medium text-gray-700 hover:text-indigo-600">${user.displayName || 'Profilim'}</a>`;
+                        }
+                        
+                        authHTML = userLinks + `<button id="logout-btn" class="text-sm font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
                     } else {
-                        userLinks = `<a href="profile.html" class="text-sm font-medium text-gray-700 hover:text-indigo-600">${user.displayName || 'Profilim'}</a>`;
+                        currentUserData = null;
+                        authHTML = `<a href="login.html" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md hover:bg-gray-700">Giriş Yap</a>`;
                     }
-                } else {
-                     userLinks = `<a href="profile.html" class="text-sm font-medium text-gray-700 hover:text-indigo-600">${user.displayName || 'Profilim'}</a>`;
-                }
-                
-                authHTML = userLinks + `<button id="logout-btn" class="text-sm font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
-            } else {
-                currentUserData = null;
-                authHTML = `<a href="login.html" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md hover:bg-gray-700">Giriş Yap</a>`;
-            }
-            userActionsEl.innerHTML = authHTML + cartIconHTML;
-            if(user) {
-                document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
-            }
-            
-            // Re-render products if user data affects buyer queue display
-            if(document.querySelector('.category-btn.bg-indigo-50')){
-                renderProducts(currentCategory);
-            }
-        });
+                    userActionsEl.innerHTML = authHTML + cartIconHTML;
+                    if(user) {
+                        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+                    }
+                    
+                    if(document.querySelector('.category-btn.bg-indigo-50')){
+                        renderProducts(currentCategory);
+                    }
+                });
+            })
+            .catch((error) => {
+                 console.error("Firebase Persistence Error:", error);
+            });
 
         menuButton.addEventListener('click', () => {
             mobileMenu.classList.toggle('max-h-0');
