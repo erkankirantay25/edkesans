@@ -24,7 +24,7 @@
                 <a href="index.html" class="text-gray-600 hover:text-indigo-600">Ana Sayfa</a>
                 <a href="urunler.html" class="font-semibold text-indigo-600">Esanslar</a>
             </div>
-            <div id="user-actions" class="flex items-center space-x-6">
+            <div id="user-actions" class="flex items-center space-x-4">
                 <a href="sepet.html" class="relative text-gray-600 hover:text-indigo-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     <span id="cart-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span>
@@ -84,6 +84,8 @@
                     <p id="modal-category" class="text-indigo-600 text-sm font-bold uppercase"></p>
                     <h2 id="modal-name" class="text-3xl font-bold text-gray-900 mt-1 mb-3"></h2>
                 
+                    <div id="modal-quota-progress-container" class="mt-2 mb-4"></div>
+
                     <div class="mb-4">
                         <h4 class="font-semibold text-gray-700 mb-2">Gramaj Seçin:</h4>
                         <div id="modal-gram-options" class="flex flex-wrap gap-2">
@@ -158,6 +160,7 @@
         const modalPrice = document.getElementById('modal-price');
         const modalAddToCartBtn = document.getElementById('modal-add-to-cart-btn');
         const buyersQueueContainer = document.getElementById('buyers-queue-container');
+        const modalQuotaProgressContainer = document.getElementById('modal-quota-progress-container');
 
         function showNotification(message) {
             notificationPopup.textContent = message;
@@ -218,6 +221,57 @@
             document.querySelector('.category-btn').classList.add('bg-indigo-50', 'text-indigo-700', 'font-bold');
         }
 
+        function renderQuotaProgress(product) {
+            const { totalDemand = 0, quota = 500, quotaIncrement = 250 } = product;
+            let tiers = [];
+            let remainingDemand = totalDemand;
+            let currentTierBase = 0;
+            
+            while (true) {
+                const tierSize = (currentTierBase === 0) ? quota : quotaIncrement;
+                if (tierSize <= 0) break; 
+                
+                if (remainingDemand >= tierSize) {
+                    tiers.push({ status: 'filled', base: currentTierBase, target: currentTierBase + tierSize });
+                    remainingDemand -= tierSize;
+                    currentTierBase += tierSize;
+                } else {
+                    tiers.push({ status: 'active', base: currentTierBase, target: currentTierBase + tierSize, progress: remainingDemand, size: tierSize });
+                    break;
+                }
+            }
+            
+            let html = '<div class="space-y-2.5">';
+            tiers.forEach(tier => {
+                if (tier.status === 'filled') {
+                    html += `
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-500 mb-1">
+                                <span>Hedef: ${tier.target}gr</span>
+                                <span class="font-bold text-green-600">Tamamlandı ✓</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2.5">
+                                <div class="bg-gradient-to-r from-green-400 to-blue-500 h-2.5 rounded-full" style="width: 100%;"></div>
+                            </div>
+                        </div>`;
+                } else {
+                    const percentage = Math.min((tier.progress / tier.size) * 100, 100);
+                    html += `
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-500 mb-1">
+                                <span>${tier.base + tier.progress}gr</span>
+                                <span>Hedef: ${tier.target}gr</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2.5">
+                                <div class="bg-gradient-to-r from-green-400 to-blue-500 h-2.5 rounded-full" style="width: ${percentage}%;"></div>
+                            </div>
+                        </div>`;
+                }
+            });
+            html += '</div>';
+            return html;
+        }
+
         function renderProducts(category) {
             let productsToDisplay = [...allProducts];
             if (category === "Popüler") {
@@ -240,10 +294,8 @@
             }
 
             productGridEl.innerHTML = productsToDisplay.map(product => {
-                const quota = product.quota || 500;
-                const totalDemand = product.totalDemand || 0;
-                const percentage = Math.min((totalDemand / quota) * 100, 100);
                 const isDisabled = !product.isActive;
+                const progressHTML = renderQuotaProgress(product);
 
                 return `
                 <div data-product-id="${product.id}" data-is-active="${product.isActive}" 
@@ -257,13 +309,7 @@
                         <p class="text-indigo-600 text-xs font-bold uppercase tracking-wider">${product.category}</p>
                         <h3 class="font-bold text-lg my-1 flex-grow">${product.name}</h3>
                         <div class="mt-2 mb-4">
-                            <div class="flex justify-between text-xs text-slate-500 mb-1">
-                                <span>${totalDemand}gr</span>
-                                <span>Hedef: ${quota}gr</span>
-                            </div>
-                            <div class="w-full bg-slate-200 rounded-full h-2.5">
-                                <div class="bg-gradient-to-r from-green-400 to-blue-500 h-2.5 rounded-full" style="width: ${percentage}%"></div>
-                            </div>
+                            ${progressHTML}
                         </div>
                         <div class="mt-auto">
                             ${!isDisabled ? `
@@ -285,16 +331,7 @@
         
         function addToCart(product, selectedGram, calculatedPrice) {
             const cart = getCart();
-            const cartItem = { 
-                id: `${product.id}_${selectedGram}`, 
-                productId: product.id,
-                name: `${product.name} (${selectedGram}gr)`,
-                price: calculatedPrice,
-                quantity: 1,
-                gram: selectedGram,
-                imageUrl: product.imageUrl
-            };
-            
+            const cartItem = { id: `${product.id}_${selectedGram}`, productId: product.id, name: `${product.name} (${selectedGram}gr)`, price: calculatedPrice, quantity: 1, gram: selectedGram, imageUrl: product.imageUrl };
             const existingItem = cart.find(i => i.id === cartItem.id);
             if (existingItem) {
                 existingItem.quantity++;
@@ -309,9 +346,7 @@
             const buyers = product.buyers || [];
             buyersQueueContainer.innerHTML = '';
             if (buyers.length === 0) return;
-            
             buyers.sort((a,b) => a.timestamp.toMillis() - b.timestamp.toMillis());
-
             let queueHtml = `<h4 class="font-semibold text-gray-700 mb-2">Sipariş Sırası (${buyers.length}):</h4><div class="text-sm space-y-1 max-h-24 overflow-y-auto">`;
             buyers.forEach((buyer, index) => {
                 const isCurrentUser = currentUser && currentUserData && buyer.userCode === currentUserData.userCode;
@@ -333,13 +368,12 @@
             modalPrice.textContent = '-- TL';
             modalAddToCartBtn.disabled = true;
             modalAddToCartBtn.textContent = 'Gramaj Seçin';
+            
+            modalQuotaProgressContainer.innerHTML = renderQuotaProgress(product);
             renderBuyerQueue(product);
 
             const gramOptions = product.activeGrams || [50, 100, 150, 200, 250];
-            modalGramOptions.innerHTML = gramOptions.map(gram => 
-                `<button class="gram-btn px-4 py-2 border rounded-lg hover:bg-indigo-100" data-gram="${gram}">${gram}gr</button>`
-            ).join('');
-
+            modalGramOptions.innerHTML = gramOptions.map(gram => `<button class="gram-btn px-4 py-2 border rounded-lg hover:bg-indigo-100" data-gram="${gram}">${gram}gr</button>`).join('');
             let selectedGram = 0;
 
             modalGramOptions.querySelectorAll('.gram-btn').forEach(btn => {
@@ -347,7 +381,6 @@
                     modalGramOptions.querySelectorAll('.gram-btn').forEach(b => b.classList.remove('selected'));
                     e.currentTarget.classList.add('selected');
                     selectedGram = parseInt(e.currentTarget.dataset.gram);
-                    
                     const calculatedPrice = (product.unitPrice / 50) * selectedGram;
                     modalPrice.textContent = `${calculatedPrice.toFixed(2)} TL`;
                     modalAddToCartBtn.disabled = false;
@@ -398,32 +431,32 @@
         setPersistence(auth, browserLocalPersistence)
             .then(() => {
                 onAuthStateChanged(auth, async (user) => {
-                    const cartIconHTML = userActionsEl.querySelector('a[href="sepet.html"]').outerHTML;
                     let authHTML = '';
                     currentUser = user;
                     
                     if (user) {
                         const userDocRef = doc(db, "users", user.uid);
                         const userDoc = await getDoc(userDocRef);
-                        let userLinks = '';
                         
                         if (userDoc.exists()) {
                             currentUserData = userDoc.data();
                             if (currentUserData.role === 'admin') {
-                                userLinks = `<a href="admin.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Admin Paneli</a>`;
+                                authHTML = `<a href="admin.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Admin Paneli</a>`;
                             } else {
-                                userLinks = `<a href="profile.html" class="text-sm font-medium text-gray-700 hover:text-indigo-600">${user.displayName || 'Profilim'}</a>`;
+                                authHTML = `<a href="profile.html" class="text-sm font-medium text-gray-700 hover:text-indigo-600">Profilim</a>`;
                             }
                         } else {
-                             userLinks = `<a href="profile.html" class="text-sm font-medium text-gray-700 hover:text-indigo-600">${user.displayName || 'Profilim'}</a>`;
+                             authHTML = `<a href="profile.html" class="text-sm font-medium text-gray-700 hover:text-indigo-600">Profilim</a>`;
                         }
-                        
-                        authHTML = userLinks + `<button id="logout-btn" class="text-sm font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
+                        authHTML += `<button id="logout-btn" class="text-sm font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
                     } else {
                         currentUserData = null;
                         authHTML = `<a href="login.html" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md hover:bg-gray-700">Giriş Yap</a>`;
                     }
-                    userActionsEl.innerHTML = authHTML + cartIconHTML;
+                    const cartIcon = userActionsEl.querySelector('a[href="sepet.html"]');
+                    userActionsEl.innerHTML = authHTML;
+                    userActionsEl.appendChild(cartIcon); 
+
                     if(user) {
                         document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
                     }
