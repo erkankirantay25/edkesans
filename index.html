@@ -90,15 +90,21 @@
                 </div>
                 
                 <div class="flex flex-col md:flex-row justify-center items-center gap-4 mt-10 mb-8 p-4 bg-white rounded-xl shadow-md">
+                    <div class="relative flex-grow md:flex-grow-0">
+                        <input type="search" id="product-search-input" placeholder="Esans ara..." class="w-full p-2 pl-10 border border-gray-300 rounded-lg">
+                        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
                      <div id="category-filters" class="flex flex-wrap justify-center gap-2">
                      </div>
-                     <div class="border-t md:border-t-0 md:border-l border-slate-200 mt-4 pt-4 md:mt-0 md:pt-0 md:ml-4 md:pl-4">
+                     <div class="border-t md:border-t-0 md:border-l border-slate-200 mt-4 pt-4 md:mt-0 md:pt-0 md:ml-4 md:pl-4 flex items-center gap-4">
                         <select id="sort-options" class="p-2 border rounded-md bg-white text-sm">
+                            <option value="name_asc">İsme Göre (A-Z)</option>
                             <option value="demand_desc">Popülerliğe Göre (En Çok)</option>
                             <option value="demand_asc">Popülerliğe Göre (En Az)</option>
                             <option value="price_desc">Fiyata Göre (En Yüksek)</option>
                             <option value="price_asc">Fiyata Göre (En Düşük)</option>
                         </select>
+                        <button id="clear-filters-btn" class="hidden text-sm text-red-600 hover:underline">Temizle</button>
                      </div>
                 </div>
 
@@ -212,6 +218,8 @@
         const cartCountEl = document.getElementById('cart-count');
         const categoryFiltersEl = document.getElementById('category-filters');
         const sortOptionsEl = document.getElementById('sort-options');
+        const searchInputEl = document.getElementById('product-search-input');
+        const clearFiltersBtn = document.getElementById('clear-filters-btn');
         const notificationPopup = document.getElementById('notification-popup');
 
         const modalEl = document.getElementById('product-modal');
@@ -232,6 +240,7 @@
         let currentUserData = null;
         let currentCategory = 'Tümü';
         let currentSort = 'demand_desc';
+        let currentSearchTerm = '';
         const CATEGORIES = ["Tümü", "Kadın", "Erkek", "Unisex", "Popüler"];
 
         setPersistence(auth, browserLocalPersistence)
@@ -316,7 +325,7 @@
             allProducts = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
             renderCategoryFilters();
-            renderAndFilterProducts();
+            filterAndRenderProducts();
             setupModalListeners();
         }
 
@@ -330,14 +339,29 @@
                     categoryFiltersEl.querySelector('.category-btn.active').classList.remove('active');
                     e.currentTarget.classList.add('active');
                     currentCategory = e.currentTarget.dataset.category;
-                    renderAndFilterProducts();
+                    filterAndRenderProducts();
                 });
             });
         }
         
-        sortOptionsEl.addEventListener('change', (e) => {
-            currentSort = e.target.value;
-            renderAndFilterProducts();
+        const updateClearFiltersButton = () => {
+            const isDefault = currentCategory === 'Tümü' && currentSort === 'demand_desc' && currentSearchTerm === '';
+            clearFiltersBtn.classList.toggle('hidden', isDefault);
+        };
+
+        sortOptionsEl.addEventListener('change', (e) => { currentSort = e.target.value; filterAndRenderProducts(); });
+        searchInputEl.addEventListener('input', (e) => { currentSearchTerm = e.target.value.toLowerCase(); filterAndRenderProducts(); });
+        clearFiltersBtn.addEventListener('click', () => {
+            currentCategory = 'Tümü';
+            currentSort = 'demand_desc';
+            currentSearchTerm = '';
+            
+            searchInputEl.value = '';
+            sortOptionsEl.value = 'demand_desc';
+            categoryFiltersEl.querySelector('.category-btn.active').classList.remove('active');
+            categoryFiltersEl.querySelector('.category-btn[data-category="Tümü"]').classList.add('active');
+            
+            filterAndRenderProducts();
         });
 
         function renderQuotaProgress(product) {
@@ -348,7 +372,7 @@
             
             while (true) {
                 const tierSize = (currentTierBase === 0) ? quota : quotaIncrement;
-                if (tierSize <= 0) break;
+                if (tierSize <= 0) break; 
                 
                 if (remainingDemand >= tierSize) {
                     tiers.push({ status: 'filled', base: currentTierBase, target: currentTierBase + tierSize });
@@ -390,8 +414,8 @@
             html += '</div>';
             return html;
         }
-
-        function renderAndFilterProducts() {
+        
+        function filterAndRenderProducts() {
             let productsToDisplay = [...allProducts];
 
             if (currentCategory === "Popüler") {
@@ -400,13 +424,26 @@
                 productsToDisplay = productsToDisplay.filter(p => p.category === currentCategory);
             }
             
+            if (currentSearchTerm) {
+                productsToDisplay = productsToDisplay.filter(p => p.name.toLowerCase().includes(currentSearchTerm));
+            }
+            
             switch(currentSort) {
                 case 'demand_desc': productsToDisplay.sort((a, b) => (b.totalDemand || 0) - (a.totalDemand || 0)); break;
                 case 'demand_asc': productsToDisplay.sort((a, b) => (a.totalDemand || 0) - (b.totalDemand || 0)); break;
                 case 'price_desc': productsToDisplay.sort((a, b) => b.unitPrice - a.unitPrice); break;
                 case 'price_asc': productsToDisplay.sort((a, b) => a.unitPrice - b.unitPrice); break;
+                case 'name_asc': 
+                default:
+                    productsToDisplay.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' })); 
+                    break;
             }
+            
+            updateClearFiltersButton();
+            renderProductGrid(productsToDisplay);
+        }
 
+        function renderProductGrid(productsToDisplay) {
             if (productsToDisplay.length === 0) {
                 featuredProductsGridEl.innerHTML = `<p class="col-span-full text-center text-slate-500">Bu kriterlere uygun ürün bulunamadı.</p>`;
                 return;
