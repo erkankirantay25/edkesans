@@ -49,10 +49,19 @@
                 </div>
             </aside>
             <section class="w-full lg:w-3/4 xl:w-4/5">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <div>
                         <h1 id="page-title" class="text-3xl font-bold text-gray-900">Tüm Esanslar</h1>
                         <p id="page-description" class="text-sm text-gray-500 mt-1">Koleksiyonumuzdaki tüm esansları keşfedin.</p>
+                    </div>
+                    <div>
+                         <select id="sort-options" class="p-2 border rounded-md bg-white text-sm w-full sm:w-auto">
+                            <option value="default">Varsayılan Sıralama</option>
+                            <option value="demand_desc">Popülerliğe Göre (En Çok)</option>
+                            <option value="demand_asc">Popülerliğe Göre (En Az)</option>
+                            <option value="price_desc">Fiyata Göre (En Yüksek)</option>
+                            <option value="price_asc">Fiyata Göre (En Düşük)</option>
+                        </select>
                     </div>
                 </div>
                 <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
@@ -66,27 +75,31 @@
             <div class="w-full md:w-1/2">
                 <img id="modal-img" src="" alt="Ürün Resmi" class="w-full h-64 md:h-full object-cover">
             </div>
-            <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col relative overflow-y-auto">
-                <button id="modal-close-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
+            <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col relative">
+                <button id="modal-close-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
-                <p id="modal-category" class="text-indigo-600 text-sm font-bold uppercase"></p>
-                <h2 id="modal-name" class="text-3xl font-bold text-gray-900 mt-1 mb-3"></h2>
-                <p id="modal-description" class="text-gray-600 mb-4 flex-grow"></p>
+                <div class="flex-shrink-0">
+                    <p id="modal-category" class="text-indigo-600 text-sm font-bold uppercase"></p>
+                    <h2 id="modal-name" class="text-3xl font-bold text-gray-900 mt-1 mb-3"></h2>
                 
-                <div id="buyers-queue-container" class="mb-4"></div>
+                    <div class="mb-4">
+                        <h4 class="font-semibold text-gray-700 mb-2">Gramaj Seçin:</h4>
+                        <div id="modal-gram-options" class="flex flex-wrap gap-2">
+                        </div>
+                    </div>
 
-                <div class="mb-4">
-                    <h4 class="font-semibold text-gray-700 mb-2">Gramaj Seçin:</h4>
-                    <div id="modal-gram-options" class="flex flex-wrap gap-2">
+                    <div class="pt-4 border-t">
+                        <p id="modal-price" class="text-gray-900 font-black text-4xl mb-4 text-right">-- TL</p>
+                        <button id="modal-add-to-cart-btn" class="w-full py-3 px-4 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            Gramaj Seçin
+                        </button>
                     </div>
                 </div>
-
-                <div class="mt-auto pt-4 border-t">
-                    <p id="modal-price" class="text-gray-900 font-black text-4xl mb-4 text-right">-- TL</p>
-                    <button id="modal-add-to-cart-btn" class="w-full py-3 px-4 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
-                        Gramaj Seçin
-                    </button>
+                
+                <div class="flex-grow mt-4 pt-4 border-t overflow-y-auto">
+                    <div id="buyers-queue-container" class="mb-4"></div>
+                    <p id="modal-description" class="text-gray-600"></p>
                 </div>
             </div>
         </div>
@@ -114,11 +127,14 @@
         let currentUser = null;
         let currentUserData = null;
         const CATEGORIES = ["Tümü", "Kadın", "Erkek", "Unisex", "Popüler"];
+        let currentCategory = 'Tümü';
+        let currentSort = 'default';
         
         const pageTitleEl = document.getElementById('page-title');
         const pageDescriptionEl = document.getElementById('page-description');
         const categoryListEl = document.getElementById('category-list');
         const productGridEl = document.getElementById('product-grid');
+        const sortOptionsEl = document.getElementById('sort-options');
         const cartCountEl = document.getElementById('cart-count');
         const userActionsEl = document.getElementById('user-actions');
         const menuButton = document.getElementById('menu-button');
@@ -141,9 +157,13 @@
             const productsSnapshot = await getDocs(q);
             allProducts = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             renderCategories();
-            renderProducts("Tümü");
+            renderProducts(currentCategory);
             updateCartCount();
             setupModalListeners();
+            sortOptionsEl.addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                renderProducts(currentCategory);
+            });
         }
 
         function renderSkeletonCards(count) {
@@ -165,12 +185,12 @@
             `).join('');
             document.querySelectorAll('.category-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    const category = e.currentTarget.dataset.category;
-                    pageTitleEl.innerText = category === "Tümü" ? "Tüm Esanslar" : `${category} Esansları`;
-                    pageDescriptionEl.innerText = category === "Tümü" ? "Koleksiyonumuzdaki tüm esansları keşfedin." : `${category} kategorisindeki esanslar listeleniyor.`;
+                    currentCategory = e.currentTarget.dataset.category;
+                    pageTitleEl.innerText = currentCategory === "Tümü" ? "Tüm Esanslar" : `${currentCategory} Esansları`;
+                    pageDescriptionEl.innerText = currentCategory === "Tümü" ? "Koleksiyonumuzdaki tüm esansları keşfedin." : `${currentCategory} kategorisindeki esanslar listeleniyor.`;
                     document.querySelector('.category-btn.bg-indigo-50')?.classList.remove('bg-indigo-50', 'text-indigo-700', 'font-bold');
                     e.currentTarget.classList.add('bg-indigo-50', 'text-indigo-700', 'font-bold');
-                    renderProducts(category);
+                    renderProducts(currentCategory);
                 });
             });
             document.querySelector('.category-btn').classList.add('bg-indigo-50', 'text-indigo-700', 'font-bold');
@@ -184,6 +204,14 @@
                 productsToDisplay = productsToDisplay.filter(p => p.category === category);
             }
             
+            switch(currentSort) {
+                case 'demand_desc': productsToDisplay.sort((a, b) => (b.totalDemand || 0) - (a.totalDemand || 0)); break;
+                case 'demand_asc': productsToDisplay.sort((a, b) => (a.totalDemand || 0) - (b.totalDemand || 0)); break;
+                case 'price_desc': productsToDisplay.sort((a, b) => b.unitPrice - a.unitPrice); break;
+                case 'price_asc': productsToDisplay.sort((a, b) => a.unitPrice - b.unitPrice); break;
+                case 'default': productsToDisplay.sort((a, b) => a.name.localeCompare(b.name)); break;
+            }
+
             if (productsToDisplay.length === 0) {
                 productGridEl.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500">Bu kategoride ürün bulunamadı.</p>`;
                 return;
@@ -262,13 +290,13 @@
             
             buyers.sort((a,b) => a.timestamp.toMillis() - b.timestamp.toMillis());
 
-            let queueHtml = `<div class="border-t pt-4"><h4 class="font-semibold text-gray-700 mb-2">Sipariş Sırası (${buyers.length}):</h4><div class="text-sm space-y-1 max-h-24 overflow-y-auto">`;
+            let queueHtml = `<h4 class="font-semibold text-gray-700 mb-2">Sipariş Sırası (${buyers.length}):</h4><div class="text-sm space-y-1 max-h-24 overflow-y-auto">`;
             buyers.forEach((buyer, index) => {
                 const isCurrentUser = currentUser && currentUserData && buyer.userCode === currentUserData.userCode;
                 const userCodeDisplay = isCurrentUser ? buyer.userCode : '***';
                 queueHtml += `<p class="text-gray-600">${index + 1}. Sıra: ${userCodeDisplay}</p>`;
             });
-            queueHtml += '</div></div>';
+            queueHtml += '</div>';
             buyersQueueContainer.innerHTML = queueHtml;
         }
 
@@ -374,6 +402,11 @@
             userActionsEl.innerHTML = authHTML + cartIconHTML;
             if(user) {
                 document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+            }
+            
+            // Re-render products if user data affects buyer queue display
+            if(document.querySelector('.category-btn.bg-indigo-50')){
+                renderProducts(currentCategory);
             }
         });
 
