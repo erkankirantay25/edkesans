@@ -15,6 +15,7 @@
         .modal-overlay { transition: opacity 0.3s ease-in-out; }
         .modal-content { transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; }
         .gram-btn.selected { background-color: #4f46e5; color: white; }
+        #notification-popup, #cookie-consent-banner { transition: opacity 0.3s, transform 0.3s; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans">
@@ -173,11 +174,20 @@
             </div>
         </div>
     </div>
+    
+    <div id="notification-popup" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white py-3 px-6 rounded-lg shadow-lg opacity-0 transform translate-y-full z-50">
+        Sepete eklendi!
+    </div>
+    
+    <div id="cookie-consent-banner" class="hidden fixed bottom-0 left-0 right-0 bg-slate-800 text-white p-4 opacity-0 transform translate-y-full z-50 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <p class="text-sm text-center sm:text-left">Sitemizdeki deneyiminizi geliştirmek için çerezleri ve gizlilik politikasını kullanıyoruz. <a href="gizlilik-politikasi.html" class="font-bold underline hover:text-indigo-300">Daha fazla bilgi alın.</a></p>
+        <button id="accept-cookies-btn" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-md hover:bg-indigo-500 whitespace-nowrap">Kabul Et</button>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -202,6 +212,7 @@
         const cartCountEl = document.getElementById('cart-count');
         const categoryFiltersEl = document.getElementById('category-filters');
         const sortOptionsEl = document.getElementById('sort-options');
+        const notificationPopup = document.getElementById('notification-popup');
 
         const modalEl = document.getElementById('product-modal');
         const modalContentEl = document.getElementById('modal-content');
@@ -222,6 +233,44 @@
         let currentSort = 'demand_desc';
         const CATEGORIES = ["Tümü", "Kadın", "Erkek", "Unisex", "Popüler"];
 
+        setPersistence(auth, browserLocalPersistence)
+            .then(() => {
+                onAuthStateChanged(auth, async (user) => {
+                    let desktopHTML = '';
+                    let mobileHTML = '';
+                    currentUser = user;
+                    
+                    if (user) {
+                        const userDocRef = doc(db, "users", user.uid);
+                        const userDoc = await getDoc(userDocRef);
+                        currentUserData = userDoc.exists() ? userDoc.data() : null;
+                        
+                        if (currentUserData && currentUserData.role === 'admin') {
+                            desktopHTML = `<a href="admin.html" class="font-medium text-indigo-600 hover:text-indigo-800">Admin Paneli</a><button id="logout-btn" class="font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
+                            mobileHTML = `<a href="admin.html" class="block w-full text-left py-3 font-medium text-indigo-600 hover:bg-slate-50">Admin Paneli</a><button id="mobile-logout-btn" class="block w-full text-left py-3 font-medium text-red-600 hover:bg-slate-50">Çıkış</button>`;
+                        } else {
+                            desktopHTML = `<a href="profile.html" class="font-medium text-slate-700 hover:text-indigo-600">${user.displayName || 'Profilim'}</a><button id="logout-btn" class="font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
+                            mobileHTML = `<a href="profile.html" class="block w-full text-left py-3 font-medium text-slate-700 hover:bg-slate-50">${user.displayName || 'Profilim'}</a><button id="mobile-logout-btn" class="block w-full text-left py-3 font-medium text-red-600 hover:bg-slate-50">Çıkış</button>`;
+                        }
+                    } else {
+                        currentUserData = null;
+                        desktopHTML = `<a href="login.html" class="px-5 py-2.5 bg-slate-800 text-white font-medium rounded-lg hover:bg-slate-700 transition-colors">Giriş Yap</a>`;
+                        mobileHTML = `<a href="login.html" class="block w-full text-left py-3 font-medium text-slate-700 hover:bg-slate-50">Giriş Yap / Üye Ol</a>`;
+                    }
+
+                    userActionsEl.innerHTML = desktopHTML;
+                    mobileUserActionsEl.innerHTML = mobileHTML;
+
+                    if(user) {
+                        document.getElementById('logout-btn')?.addEventListener('click', () => signOut(auth));
+                        document.getElementById('mobile-logout-btn')?.addEventListener('click', () => signOut(auth));
+                    }
+                });
+            })
+            .catch((error) => {
+                console.error("Firebase Persistence Error:", error);
+            });
+
         const mainSlider = new Swiper('.main-slider', {
             loop: true,
             autoplay: { delay: 5000, disableOnInteraction: false },
@@ -236,37 +285,19 @@
 
         window.addEventListener('scroll', () => mainHeader.classList.toggle('shadow-lg', window.scrollY > 10));
 
-        onAuthStateChanged(auth, async (user) => {
-            let desktopHTML = '';
-            let mobileHTML = '';
-            currentUser = user;
-            
-            if (user) {
-                const userDocRef = doc(db, "users", user.uid);
-                const userDoc = await getDoc(userDocRef);
-                currentUserData = userDoc.exists() ? userDoc.data() : null;
-                
-                if (currentUserData && currentUserData.role === 'admin') {
-                    desktopHTML = `<a href="admin.html" class="font-medium text-indigo-600 hover:text-indigo-800">Admin Paneli</a><button id="logout-btn" class="font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
-                    mobileHTML = `<a href="admin.html" class="block w-full text-left py-3 font-medium text-indigo-600 hover:bg-slate-50">Admin Paneli</a><button id="mobile-logout-btn" class="block w-full text-left py-3 font-medium text-red-600 hover:bg-slate-50">Çıkış</button>`;
-                } else {
-                    desktopHTML = `<a href="profile.html" class="font-medium text-slate-700 hover:text-indigo-600">${user.displayName || 'Profilim'}</a><button id="logout-btn" class="font-medium text-red-600 hover:text-red-800">Çıkış</button>`;
-                    mobileHTML = `<a href="profile.html" class="block w-full text-left py-3 font-medium text-slate-700 hover:bg-slate-50">${user.displayName || 'Profilim'}</a><button id="mobile-logout-btn" class="block w-full text-left py-3 font-medium text-red-600 hover:bg-slate-50">Çıkış</button>`;
-                }
-            } else {
-                currentUserData = null;
-                desktopHTML = `<a href="login.html" class="px-5 py-2.5 bg-slate-800 text-white font-medium rounded-lg hover:bg-slate-700 transition-colors">Giriş Yap</a>`;
-                mobileHTML = `<a href="login.html" class="block w-full text-left py-3 font-medium text-slate-700 hover:bg-slate-50">Giriş Yap / Üye Ol</a>`;
-            }
+        function showNotification(message) {
+            notificationPopup.textContent = message;
+            notificationPopup.classList.remove('hidden', 'opacity-0', 'translate-y-full');
+            notificationPopup.classList.add('opacity-100', 'translate-y-0');
 
-            userActionsEl.innerHTML = desktopHTML;
-            mobileUserActionsEl.innerHTML = mobileHTML;
-
-            if(user) {
-                document.getElementById('logout-btn')?.addEventListener('click', () => signOut(auth));
-                document.getElementById('mobile-logout-btn')?.addEventListener('click', () => signOut(auth));
-            }
-        });
+            setTimeout(() => {
+                notificationPopup.classList.remove('opacity-100', 'translate-y-0');
+                notificationPopup.classList.add('opacity-0', 'translate-y-full');
+                setTimeout(() => {
+                    notificationPopup.classList.add('hidden');
+                }, 300);
+            }, 2500);
+        }
 
         async function loadSiteSettings() {
              const settingsDocRef = doc(db, 'settings', 'config');
@@ -388,7 +419,7 @@
             const existingItem = cart.find(i => i.id === cartItem.id);
             if (existingItem) existingItem.quantity++; else cart.push(cartItem);
             saveCart(cart);
-            alert(`'${cartItem.name}' sepete eklendi!`);
+            showNotification(`'${cartItem.name}' sepete eklendi!`);
         }
         
         function renderBuyerQueue(product) {
@@ -478,9 +509,32 @@
             });
         }
         
+        function initializeCookieBanner() {
+            const consentBanner = document.getElementById('cookie-consent-banner');
+            const acceptBtn = document.getElementById('accept-cookies-btn');
+
+            if (!localStorage.getItem('esanscim_cookie_consent')) {
+                consentBanner.classList.remove('hidden');
+                setTimeout(() => {
+                    consentBanner.classList.remove('opacity-0', 'translate-y-full');
+                    consentBanner.classList.add('opacity-100', 'translate-y-0');
+                }, 100);
+            }
+
+            acceptBtn.addEventListener('click', () => {
+                localStorage.setItem('esanscim_cookie_consent', 'true');
+                consentBanner.classList.remove('opacity-100', 'translate-y-0');
+                consentBanner.classList.add('opacity-0', 'translate-y-full');
+                setTimeout(() => {
+                    consentBanner.classList.add('hidden');
+                }, 300);
+            });
+        }
+        
         loadSiteSettings();
         initializeHomePage();
         updateCartCount();
+        initializeCookieBanner();
 
     </script>
 </body>
