@@ -44,7 +44,11 @@
         <div class="flex flex-col lg:flex-row gap-8">
             <aside class="w-full lg:w-1/4 xl:w-1/5">
                 <div class="bg-white p-5 rounded-lg shadow-md sticky top-24">
-                    <h3 class="font-bold text-lg mb-4 border-b pb-2">Kategoriler</h3>
+                    <div class="relative mb-4">
+                        <input type="search" id="product-search-input" placeholder="Esans ara..." class="w-full p-2 pl-10 border border-gray-300 rounded-lg">
+                        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <h3 class="font-bold text-lg mb-4 border-t pt-4">Kategoriler</h3>
                     <ul id="category-list" class="space-y-1">
                     </ul>
                 </div>
@@ -57,7 +61,7 @@
                     </div>
                     <div>
                          <select id="sort-options" class="p-2 border rounded-md bg-white text-sm w-full sm:w-auto">
-                            <option value="default">Varsayılan Sıralama</option>
+                            <option value="name_asc">İsme Göre (A-Z)</option>
                             <option value="demand_desc">Popülerliğe Göre (En Çok)</option>
                             <option value="demand_asc">Popülerliğe Göre (En Az)</option>
                             <option value="price_desc">Fiyata Göre (En Yüksek)</option>
@@ -136,13 +140,15 @@
         let currentUserData = null;
         const CATEGORIES = ["Tümü", "Kadın", "Erkek", "Unisex", "Popüler"];
         let currentCategory = 'Tümü';
-        let currentSort = 'default';
+        let currentSort = 'name_asc';
+        let currentSearchTerm = '';
         
         const pageTitleEl = document.getElementById('page-title');
         const pageDescriptionEl = document.getElementById('page-description');
         const categoryListEl = document.getElementById('category-list');
         const productGridEl = document.getElementById('product-grid');
         const sortOptionsEl = document.getElementById('sort-options');
+        const searchInputEl = document.getElementById('product-search-input');
         const cartCountEl = document.getElementById('cart-count');
         const userActionsEl = document.getElementById('user-actions');
         const menuButton = document.getElementById('menu-button');
@@ -176,19 +182,44 @@
             }, 2500);
         }
 
+        function filterAndRenderProducts() {
+            let productsToDisplay = [...allProducts];
+
+            if (currentCategory === "Popüler") {
+                productsToDisplay.sort((a, b) => (b.totalDemand || 0) - (a.totalDemand || 0));
+            } else if (currentCategory !== "Tümü") {
+                productsToDisplay = productsToDisplay.filter(p => p.category === currentCategory);
+            }
+
+            if (currentSearchTerm) {
+                productsToDisplay = productsToDisplay.filter(p => p.name.toLowerCase().includes(currentSearchTerm));
+            }
+            
+            switch(currentSort) {
+                case 'demand_desc': productsToDisplay.sort((a, b) => (b.totalDemand || 0) - (a.totalDemand || 0)); break;
+                case 'demand_asc': productsToDisplay.sort((a, b) => (a.totalDemand || 0) - (b.totalDemand || 0)); break;
+                case 'price_desc': productsToDisplay.sort((a, b) => b.unitPrice - a.unitPrice); break;
+                case 'price_asc': productsToDisplay.sort((a, b) => a.unitPrice - b.unitPrice); break;
+                case 'name_asc': 
+                default:
+                    productsToDisplay.sort((a, b) => a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' })); 
+                    break;
+            }
+
+            renderProductGrid(productsToDisplay);
+        }
+
         async function initializePage() {
             renderSkeletonCards(9);
             const q = query(collection(db, "products"), orderBy("name"));
             const productsSnapshot = await getDocs(q);
             allProducts = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             renderCategories();
-            renderProducts(currentCategory);
+            filterAndRenderProducts();
             updateCartCount();
             setupModalListeners();
-            sortOptionsEl.addEventListener('change', (e) => {
-                currentSort = e.target.value;
-                renderProducts(currentCategory);
-            });
+            sortOptionsEl.addEventListener('change', (e) => { currentSort = e.target.value; filterAndRenderProducts(); });
+            searchInputEl.addEventListener('input', (e) => { currentSearchTerm = e.target.value.toLowerCase(); filterAndRenderProducts(); });
         }
 
         function renderSkeletonCards(count) {
@@ -215,7 +246,7 @@
                     pageDescriptionEl.innerText = currentCategory === "Tümü" ? "Koleksiyonumuzdaki tüm esansları keşfedin." : `${currentCategory} kategorisindeki esanslar listeleniyor.`;
                     document.querySelector('.category-btn.bg-indigo-50')?.classList.remove('bg-indigo-50', 'text-indigo-700', 'font-bold');
                     e.currentTarget.classList.add('bg-indigo-50', 'text-indigo-700', 'font-bold');
-                    renderProducts(currentCategory);
+                    filterAndRenderProducts();
                 });
             });
             document.querySelector('.category-btn').classList.add('bg-indigo-50', 'text-indigo-700', 'font-bold');
@@ -272,24 +303,9 @@
             return html;
         }
 
-        function renderProducts(category) {
-            let productsToDisplay = [...allProducts];
-            if (category === "Popüler") {
-                productsToDisplay.sort((a, b) => (b.totalDemand || 0) - (a.totalDemand || 0));
-            } else if (category !== "Tümü") {
-                productsToDisplay = productsToDisplay.filter(p => p.category === category);
-            }
-            
-            switch(currentSort) {
-                case 'demand_desc': productsToDisplay.sort((a, b) => (b.totalDemand || 0) - (a.totalDemand || 0)); break;
-                case 'demand_asc': productsToDisplay.sort((a, b) => (a.totalDemand || 0) - (b.totalDemand || 0)); break;
-                case 'price_desc': productsToDisplay.sort((a, b) => b.unitPrice - a.unitPrice); break;
-                case 'price_asc': productsToDisplay.sort((a, b) => a.unitPrice - b.unitPrice); break;
-                case 'default': productsToDisplay.sort((a, b) => a.name.localeCompare(b.name)); break;
-            }
-
+        function renderProductGrid(productsToDisplay) {
             if (productsToDisplay.length === 0) {
-                productGridEl.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500">Bu kategoride ürün bulunamadı.</p>`;
+                productGridEl.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500">Bu kriterlere uygun ürün bulunamadı.</p>`;
                 return;
             }
 
@@ -462,7 +478,7 @@
                     }
                     
                     if(document.querySelector('.category-btn.bg-indigo-50')){
-                        renderProducts(currentCategory);
+                        filterAndRenderProducts();
                     }
                 });
             })
