@@ -94,6 +94,15 @@
         </div>
     </div>
 
+    <!-- BAŞARI MODALI (YENİ EKLENDİ) -->
+    <div id="success-modal" class="modal-overlay fixed inset-0 bg-black/60 items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm text-center">
+            <svg class="w-16 h-16 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <h3 class="text-2xl font-bold mt-4 mb-2 text-gray-800">Başarılı!</h3>
+            <p class="text-sm text-gray-600 mb-6">Hesabınız başarıyla oluşturuldu. Ana sayfaya yönlendiriliyorsunuz...</p>
+        </div>
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -123,6 +132,7 @@
         const forgotPasswordModal = document.getElementById('forgot-password-modal');
         const resetPasswordForm = document.getElementById('reset-password-form');
         const resetMessage = document.getElementById('reset-message');
+        const successModal = document.getElementById('success-modal'); // YENİ EKLENDİ
 
         let confirmationResult = null;
         let isVerificationSent = false;
@@ -203,7 +213,8 @@
                     console.error("SMS gönderme hatası:", error);
                     errorMessage.innerText = 'Telefon numarası geçersiz veya bir hata oluştu.';
                     errorMessage.classList.replace('text-green-600', 'text-red-500');
-                    grecaptcha.reset(window.recaptchaWidgetId);
+                    // Bu satır hataya neden olabilir, grecaptcha her zaman yüklenmemiş olabilir. Şimdilik yorum satırı yapalım veya daha güvenli bir reset metodu kullanalım.
+                    // grecaptcha.reset(window.recaptchaWidgetId);
                 } finally {
                     registerSubmitBtn.disabled = false;
                 }
@@ -229,8 +240,18 @@
                     
                     await updateProfile(user, { displayName: name });
                     
-                    alert('Hesabınız başarıyla oluşturuldu! Ana sayfaya yönlendiriliyorsunuz.');
-                    window.location.href = 'index.html';
+                    // --- DEĞİŞİKLİK BURADA BAŞLIYOR ---
+                    // Eski kod: alert('Hesabınız başarıyla oluşturuldu! Ana sayfaya yönlendiriliyorsunuz.');
+                    
+                    // Yeni modern pop-up'ı göster
+                    successModal.classList.add('active');
+                    
+                    // 3 saniye sonra ana sayfaya yönlendir
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 3000);
+                    // --- DEĞİŞİKLİK BURADA BİTİYOR ---
+
                 } catch (err) {
                     console.error("Kayıt hatası:", err);
                     if (err.code === 'auth/email-already-in-use') errorMessage.innerText = 'Bu e-posta adresi zaten kayıtlı.';
