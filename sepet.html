@@ -9,7 +9,7 @@
         #iyzico-form { transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out; }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 flex flex-col min-h-screen">
     <header class="bg-white shadow-sm sticky top-0 z-20">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <a href="index.html" class="text-2xl font-bold text-gray-800">ESANSCIM</a>
@@ -17,7 +17,7 @@
         </nav>
     </header>
 
-    <main class="container mx-auto px-6 py-8">
+    <main class="container mx-auto px-6 py-8 flex-grow">
         <div id="page-container">
             <div id="loading-state" class="text-center p-10">
                 <p>Sepetiniz yükleniyor...</p>
@@ -68,6 +68,27 @@
                                         <input type="checkbox" name="agreement" class="agreement-checkbox h-4 w-4 mt-1 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                                         <span class="ml-2 text-xs text-gray-600"><a href="gizlilik-politikasi.html" target="_blank" class="text-indigo-600 hover:underline font-medium">Gizlilik Politikası ve KVKK Aydınlatma Metnini</a> okudum, onaylıyorum.</span>
                                     </label>
+
+                                    <!-- YENİ EKLENEN BİLGİLENDİRME KUTULARI -->
+                                    <div class="mt-4 pt-4 border-t">
+                                        <p class="text-sm font-semibold mb-2 text-gray-700">Önemli Bilgilendirme:</p>
+                                        <div class="space-y-3">
+                                            <div class="p-3 border border-red-200 bg-red-50 rounded-md">
+                                                <label class="flex items-start cursor-pointer">
+                                                    <input type="checkbox" name="agreement" class="agreement-checkbox h-4 w-4 mt-1 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                                    <span class="ml-2 text-xs text-red-800">Siparişimi onayladığım andan itibaren hiç bir gerekçeyle sipariş içeriğinde ekleme, çıkarma, değişiklik ya da iptal talep edemeyeceğim konusunda bilgilendirildim.</span>
+                                                </label>
+                                            </div>
+                                            <div class="p-3 border border-red-200 bg-red-50 rounded-md">
+                                                <label class="flex items-start cursor-pointer">
+                                                    <input type="checkbox" name="agreement" class="agreement-checkbox h-4 w-4 mt-1 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                                    <span class="ml-2 text-xs text-red-800">Sipariş ettiğim esans ve kimyasal ürünlerin endüstriyel kullanıma yönelik ve belli özel proseslerde, kullanım oranına, kullandığım diğer hammaddelere ve dinlenme süresine göre performans gösteren profesyonel ürünler olduğu ve ben satın aldığımda üzerimde adım yazılı etiketle kişiselleştirilerek şişelenip gönderildiği ve bu nedenle iade imkanım olmadığı konusunda bilgilendirildim.</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- YENİ BÖLÜM SONU -->
+
                                 </div>
 
                                 <div class="mt-6">
@@ -107,6 +128,41 @@
         </div>
     </main>
 
+    <!-- YENİ EKLENEN FOOTER -->
+    <footer class="bg-white mt-12 py-8 border-t">
+        <div class="container mx-auto px-6 text-center text-gray-600">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-2">İletişim</h3>
+                    <p class="text-sm">E-posta: destek@esanscim.com</p>
+                    <p class="text-sm">Telefon: +90 555 123 45 67</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-2">Yasal Bilgiler</h3>
+                    <div class="flex flex-col space-y-1">
+                        <a href="hakkimizda.html" class="text-sm hover:underline">Hakkımızda</a>
+                        <a href="mesafeli-satis-sozlesmesi.html" class="text-sm hover:underline">Mesafeli Satış Sözleşmesi</a>
+                        <a href="gizlilik-politikasi.html" class="text-sm hover:underline">Gizlilik Politikası</a>
+                        <a href="kullanim-kosullari.html" class="text-sm hover:underline">Kullanım Koşulları</a>
+                        <a href="teslimat-iade.html" class="text-sm hover:underline">Teslimat ve İade Şartları</a>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-2">Güvenli Ödeme</h3>
+                    <div class="flex justify-center items-center space-x-4">
+                        <!-- İkonları veya logoları buraya ekleyebilirsiniz. Örnek olarak metin kullanılmıştır. -->
+                        <img src="https://www.iyzico.com/assets/images/iyzico_logo.svg" alt="iyzico ile Öde" class="h-8">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Mastercard_2019_logo.svg" alt="MasterCard" class="h-8">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" class="h-8">
+                    </div>
+                </div>
+            </div>
+            <p class="text-xs mt-8">© 2024 Esanscim. Tüm hakları saklıdır.</p>
+        </div>
+    </footer>
+    <!-- FOOTER SONU -->
+
+
     <script src="https://static.iyzipay.com/v1/iyzico.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -114,6 +170,7 @@
         import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp, writeBatch, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
+        // Firebase config'i burada aynı kalır...
         const firebaseConfig = { apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA", authDomain: "esanscim.firebaseapp.com", projectId: "esanscim", storageBucket: "esanscim.firebasestorage.app", messagingSenderId: "570763360884", appId: "1:570763360884:web:47562ad20c047b9defaf21" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -143,7 +200,10 @@
         const removeItem = (itemId) => { cart = cart.filter(item => item.id !== itemId); saveCart(cart); renderPageContent(); };
 
         const renderCartItems = () => { cartItemsContainer.innerHTML = cart.map(item => `<div class="flex items-center py-4 border-b last:border-b-0"><img src="${item.imageUrl || './images/default-esans.png'}" alt="${item.name || 'Ürün'}" class="w-20 h-20 object-cover rounded-md mr-4"><div class="flex-grow"><p class="font-semibold">${item.name || 'Bilinmeyen Ürün'}</p><p class="text-sm text-gray-500">${item.gram || '?'}gr</p><p class="text-sm font-bold text-indigo-600">${(item.price || 0).toFixed(2)} TL</p></div><div class="flex items-center mx-4"><button class="quantity-btn h-8 w-8 text-lg rounded-full hover:bg-gray-200 transition-colors" data-id="${item.id}" data-change="-1">-</button><span class="w-12 text-center font-medium">${item.quantity || 1}</span><button class="quantity-btn h-8 w-8 text-lg rounded-full hover:bg-gray-200 transition-colors" data-id="${item.id}" data-change="1">+</button></div><button class="remove-btn text-gray-400 hover:text-red-500 text-2xl font-light w-8 h-8 flex items-center justify-center" data-id="${item.id}">×</button></div>`).join(''); document.querySelectorAll('.quantity-btn').forEach(btn => btn.onclick = (e) => updateQuantity(e.currentTarget.dataset.id, parseInt(e.currentTarget.dataset.change))); document.querySelectorAll('.remove-btn').forEach(btn => btn.onclick = (e) => removeItem(e.currentTarget.dataset.id)); };
-        const updateCheckoutButtonState = () => { const isAddressAvailable = userData && userData.address && userData.address.trim() !== ''; const allAgreementsChecked = Array.from(agreementCheckboxes).every(cb => cb.checked); checkoutButton.disabled = !allAgreementsChecked || !isAddressAvailable || !selectedShippingCarrier; };
+        
+        // Bu fonksiyon, yeni eklenen checkbox'ları da kontrol edecek şekilde güncellendi. (Aslında kod aynı kalıyor, çünkü hepsi aynı class'a sahip)
+        const updateCheckoutButtonState = () => { const isAddressAvailable = userData && userData.address && userData.address.trim() !== ''; const allAgreementsChecked = Array.from(document.querySelectorAll('.agreement-checkbox')).every(cb => cb.checked); checkoutButton.disabled = !allAgreementsChecked || !isAddressAvailable || !selectedShippingCarrier; };
+
         const handleShippingSelection = (event) => { selectedShippingCarrier = activeShippingCarriers.find(c => c.name === event.target.value) || null; renderSummary(); };
         const renderAddress = () => { if (!userData?.address) { addressContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Teslimat Adresi</h2><p class="text-red-500 text-sm">Siparişe devam etmek için kayıtlı bir teslimat adresiniz olmalıdır.</p><a href="profile.html" class="mt-2 inline-block text-indigo-600 hover:underline text-sm font-semibold">Profil Sayfasından Adres Ekle →</a>`; } else { addressContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Teslimat Adresi</h2><div class="border rounded-md p-3 bg-gray-50"><p class="font-semibold text-sm">Kayıtlı Adresim</p><p class="text-gray-600 text-sm whitespace-pre-wrap">${userData.address}</p></div><div class="mt-4"><label class="flex items-center"><input type="checkbox" id="billing-same-as-shipping" checked class="h-4 w-4 text-indigo-600 border-gray-300 rounded"><span class="ml-2 text-sm text-gray-700">Fatura adresim, teslimat adresimle aynı.</span></label></div>`; } };
         const renderShippingOptions = () => { if (activeShippingCarriers.length === 0) { shippingOptionsContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Kargo Seçimi</h2><p class="text-sm text-gray-500">Aktif kargo seçeneği bulunamadı.</p>`; selectedShippingCarrier = null; return; } shippingOptionsContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Kargo Seçimi</h2><div class="space-y-2">${activeShippingCarriers.map((carrier, index) => `<label class="flex items-center justify-between p-3 border rounded-md cursor-pointer hover:bg-gray-50"><div class="flex items-center"><input type="radio" name="shipping-carrier" value="${carrier.name}" id="carrier-${index}" class="h-4 w-4 text-indigo-600 border-gray-300"><span class="ml-3 text-sm font-medium text-gray-800">${carrier.name}</span></div><span class="text-sm font-semibold">${carrier.price.toFixed(2)} TL</span></label>`).join('')}</div>`; document.querySelectorAll('input[name="shipping-carrier"]').forEach(radio => radio.addEventListener('change', handleShippingSelection)); if (activeShippingCarriers.length === 1) { document.getElementById('carrier-0').checked = true; selectedShippingCarrier = activeShippingCarriers[0]; } };
@@ -154,13 +214,10 @@
         const handleCheckout = async () => {
             checkoutButton.disabled = true;
             checkoutButton.textContent = 'Kontrol Ediliyor...';
-
             let quotaWarningMessage = '';
             isAnyItemPendingQuotaForPayment = false;
-            
             const productDocsPromises = cart.map(item => getDoc(doc(db, "products", item.productId)));
             const productDocs = await Promise.all(productDocsPromises);
-
             for (let i = 0; i < cart.length; i++) {
                 const productData = productDocs[i].data();
                 if (productData && productData.quota > (productData.totalDemand || 0)) {
@@ -168,7 +225,6 @@
                     quotaWarningMessage += `- ${productData.name}\n`;
                 }
             }
-            
             if(isAnyItemPendingQuotaForPayment){
                 const proceed = confirm(`UYARI:\n\nAşağıdaki ürün(ler) henüz minimum sipariş kotasına ulaşmamıştır. Siparişiniz, ürün(ler) kotayı doldurduğunda işleme alınacaktır:\n\n${quotaWarningMessage}\nDevam etmek istiyor musunuz?`);
                 if (!proceed) {
@@ -204,14 +260,15 @@
         };
         
         onAuthStateChanged(auth, async (user) => { try { if (user) { currentUser = user; const userDoc = await getDoc(doc(db, "users", user.uid)); userData = userDoc.exists() ? userDoc.data() : { name: user.displayName, email: user.email }; await renderPageContent(); } else { currentUser = null; userData = null; showState(states.authRequired); } } catch (error) { console.error("Sepet sayfası yüklenirken hata oluştu:", error); pageContainer.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-md text-center max-w-2xl mx-auto"><h2 class="text-2xl font-bold text-red-600 mb-4">Bir Hata Oluştu</h2><p class="text-gray-600 mb-6">Sayfa yüklenirken beklenmedik bir sorun oluştu.</p></div>`; } });
-        agreementCheckboxes.forEach(checkbox => checkbox.addEventListener('change', updateCheckoutButtonState));
+        
+        // Bu event listener, tüm checkbox'ları (yeni eklenenler dahil) dinler.
+        document.querySelectorAll('.agreement-checkbox').forEach(checkbox => checkbox.addEventListener('change', updateCheckoutButtonState));
         checkoutButton.addEventListener('click', handleCheckout);
         
         iyzicoPayButton.addEventListener('click', async () => {
             iyzicoPayButton.disabled = true; iyzicoPayButton.textContent = 'İşleniyor...'; paymentErrorMessage.textContent = '';
             const expiry = document.getElementById('card-expiry').value.split('/');
             const subtotal = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
-
             const paymentData = {
                 paymentCard: { cardHolderName: document.getElementById('card-holder-name').value, cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''), expireYear: `20${expiry[1]}`, expireMonth: expiry[0], cvc: document.getElementById('card-cvc').value },
                 buyer: { id: currentUser.uid, name: userData.name.split(' ')[0], surname: userData.name.split(' ').slice(1).join(' ') || 'N/A', gsmNumber: userData.phone || '+905555555555', email: userData.email, identityNumber: '11111111111', lastLoginDate: new Date().toISOString().slice(0, 19).replace('T', ' '), registrationDate: currentUser.metadata.creationTime.slice(0, 19).replace('T', ' '), registrationAddress: userData.address, ip: '85.34.78.112', city: 'Istanbul', country: 'Turkey', zipCode: '34732' },
@@ -221,7 +278,6 @@
                 price: subtotal.toFixed(2),
                 paidPrice: (subtotal + selectedShippingCarrier.price).toFixed(2),
             };
-            
             try {
                 const result = await createIyzicoPayment(paymentData);
                 if (result.data.status === 'success') { await finalizeOrder(isAnyItemPendingQuotaForPayment); } else { throw new Error(result.data.errorMessage || 'Ödeme başarısız.'); }
