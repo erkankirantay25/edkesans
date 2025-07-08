@@ -133,8 +133,10 @@
                     <div>
                         <h3 class="font-bold text-white text-base tracking-wider uppercase mb-4">Yasal</h3>
                         <ul class="space-y-3 text-sm">
+                            <li><a href="hakkimizda.html" class="hover:text-indigo-400 transition-colors">Hakkımızda</a></li>
                             <li><a href="gizlilik-politikasi.html" class="hover:text-indigo-400 transition-colors">Gizlilik Politikası</a></li>
                             <li><a href="kullanim-kosullari.html" class="hover:text-indigo-400 transition-colors">Kullanım Koşulları</a></li>
+                            <li><a href="teslimat-iade.html" class="hover:text-indigo-400 transition-colors">Teslimat ve İade</a></li>
                             <li><a href="mesafeli-satis-sozlesmesi.html" class="hover:text-indigo-400 transition-colors">Mesafeli Satış Sözleşmesi</a></li>
                         </ul>
                     </div>
@@ -185,9 +187,15 @@
         Sepete eklendi!
     </div>
     
-    <div id="cookie-consent-banner" class="hidden fixed bottom-0 left-0 right-0 bg-slate-800 text-white p-4 opacity-0 transform translate-y-full z-50 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <p class="text-sm text-center sm:text-left">Sitemizdeki deneyiminizi geliştirmek için çerezleri ve gizlilik politikasını kullanıyoruz. <a href="gizlilik-politikasi.html" class="font-bold underline hover:text-indigo-300">Daha fazla bilgi alın.</a></p>
-        <button id="accept-cookies-btn" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-md hover:bg-indigo-500 whitespace-nowrap">Kabul Et</button>
+    <div id="cookie-consent-banner" class="hidden fixed bottom-0 left-0 right-0 bg-slate-800 text-white p-4 opacity-0 transform translate-y-full z-50">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p class="text-sm text-center sm:text-left flex-grow">Sitemizdeki deneyiminizi geliştirmek için çerezleri kullanıyoruz. <a href="gizlilik-politikasi.html" class="font-bold underline hover:text-indigo-300">Gizlilik Politikamızı</a> inceleyebilirsiniz.</p>
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <button id="cookie-reject-btn" class="bg-slate-700 text-white font-bold py-2 px-5 rounded-md hover:bg-slate-600 whitespace-nowrap">Reddet</button>
+                <a href="gizlilik-politikasi.html" class="text-white font-bold py-2 px-5 rounded-md hover:bg-slate-700 whitespace-nowrap">Tercihler</a>
+                <button id="cookie-accept-btn" class="bg-indigo-600 text-white font-bold py-2 px-5 rounded-md hover:bg-indigo-500 whitespace-nowrap">Tümünü Kabul Et</button>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
@@ -583,7 +591,16 @@
         
         function initializeCookieBanner() {
             const consentBanner = document.getElementById('cookie-consent-banner');
-            const acceptBtn = document.getElementById('accept-cookies-btn');
+            const acceptBtn = document.getElementById('cookie-accept-btn');
+            const rejectBtn = document.getElementById('cookie-reject-btn');
+
+            const hideBanner = () => {
+                consentBanner.classList.remove('opacity-100', 'translate-y-0');
+                consentBanner.classList.add('opacity-0', 'translate-y-full');
+                setTimeout(() => {
+                    consentBanner.classList.add('hidden');
+                }, 300);
+            };
 
             if (!localStorage.getItem('esanscim_cookie_consent')) {
                 consentBanner.classList.remove('hidden');
@@ -594,12 +611,13 @@
             }
 
             acceptBtn.addEventListener('click', () => {
-                localStorage.setItem('esanscim_cookie_consent', 'true');
-                consentBanner.classList.remove('opacity-100', 'translate-y-0');
-                consentBanner.classList.add('opacity-0', 'translate-y-full');
-                setTimeout(() => {
-                    consentBanner.classList.add('hidden');
-                }, 300);
+                localStorage.setItem('esanscim_cookie_consent', 'accepted');
+                hideBanner();
+            });
+
+            rejectBtn.addEventListener('click', () => {
+                localStorage.setItem('esanscim_cookie_consent', 'rejected');
+                hideBanner();
             });
         }
         
