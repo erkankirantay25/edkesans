@@ -250,7 +250,11 @@
             
             const paymentData = { 
                 paymentCard: { cardHolderName: document.getElementById('card-holder-name').value, cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''), expireYear: `20${expiry[1]}`, expireMonth: expiry[0], cvc: document.getElementById('card-cvc').value }, 
-                basketItems: cart.map(item => ({ productId: item.productId, quantity: item.quantity })),
+                basketItems: cart.map(item => ({ 
+                    productId: item.productId, 
+                    quantity: item.quantity,
+                    gram: item.gram // Sunucunun doğru fiyatı hesaplaması için gramajı da gönderiyoruz.
+                })),
                 shippingCarrierName: selectedShippingCarrier.name
             }; 
             
