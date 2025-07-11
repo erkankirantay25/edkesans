@@ -100,7 +100,6 @@ exports.createIyzicoPayment = functions.region('europe-west1').https.onCall(asyn
       iyzico.payment.create(request, (err, res) => err ? reject(err) : resolve(res));
     });
 
-    // En kritik düzeltme: Dönen cevabı sadeleştiriyoruz.
     if (result.status === 'success') {
       return { 
         status: result.status, 
