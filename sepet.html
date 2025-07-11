@@ -174,16 +174,16 @@
     <script src="https://static.iyzipay.com/v1/iyzico.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, getIdToken } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp, writeBatch, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
         const firebaseConfig = { apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA", authDomain: "esanscim.firebaseapp.com", projectId: "esanscim", storageBucket: "esanscim.firebasestorage.app", messagingSenderId: "570763360884", appId: "1:570763360884:web:47562ad20c047b9defaf21" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const functions = getFunctions(app, 'europe-west1');
-        const createIyzicoPayment = httpsCallable(functions, 'createIyzicoPayment');
+        
+        // Yeni sunucu fonksiyonumuzun URL'i
+        const createPaymentUrl = 'https://europe-west1-esanscim.cloudfunctions.net/createIyzicoPayment';
 
         const pageContainer = document.getElementById('page-container');
         const states = { loading: document.getElementById('loading-state'), authRequired: document.getElementById('auth-required-state'), emptyCart: document.getElementById('empty-cart-state'), cartContent: document.getElementById('cart-content') };
@@ -233,6 +233,12 @@
             iyzicoPayButton.textContent = 'İşleniyor...';
             paymentErrorMessage.textContent = '';
             
+            if (!currentUser) {
+                paymentErrorMessage.textContent = 'Ödeme yapmak için giriş yapmalısınız.';
+                iyzicoPayButton.disabled = false;
+                return;
+            }
+
             const expiry = document.getElementById('card-expiry').value.split('/');
             if (expiry.length !== 2 || !expiry[0] || !expiry[1]) {
                 paymentErrorMessage.textContent = 'Geçerli bir son kullanma tarihi girin (AA/YY).';
@@ -253,20 +259,35 @@
                 basketItems: cart.map(item => ({ 
                     productId: item.productId, 
                     quantity: item.quantity,
-                    gram: item.gram // Sunucunun doğru fiyatı hesaplaması için gramajı da gönderiyoruz.
+                    gram: item.gram
                 })),
                 shippingCarrierName: selectedShippingCarrier.name
             }; 
             
-            try { 
-                const result = await createIyzicoPayment(paymentData); 
+            try {
+                const token = await getIdToken(currentUser);
+                const response = await fetch(createPaymentUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ data: paymentData })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error?.message || 'Sunucudan geçersiz yanıt alındı.');
+                }
+                
                 if (result.data.status === 'success') { 
                     await finalizeOrder(isAnyItemPendingQuotaForPayment); 
                 } else { 
                     throw new Error(result.data.errorMessage || 'Ödeme başarısız.'); 
                 } 
             } catch (error) { 
-                console.error("Iyzico ödeme hatası:", error); 
+                console.error("Ödeme hatası:", error); 
                 paymentErrorMessage.textContent = error.message || 'Ödeme alınamadı. Kart bilgilerinizi kontrol edin.'; 
                 iyzicoPayButton.disabled = false; 
                 iyzicoPayButton.textContent = 'Güvenli Ödeme Yap'; 
