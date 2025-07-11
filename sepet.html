@@ -260,7 +260,6 @@
             
             try { 
                 const result = await createIyzicoPayment(paymentData);
-                // Artık result.data.status kontrolü yapıyoruz
                 if (result.data.status === 'success') { 
                     await finalizeOrder(isAnyItemPendingQuotaForPayment); 
                 } else { 
