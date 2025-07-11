@@ -1,10 +1,10 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const iyzico = require("iyzipay");
+const Iyzipay = require("iyzipay"); // Değişiklik burada
 
 admin.initializeApp();
 
-const iyzicoClient = new iyzico({
+const iyzicoClient = new Iyzipay({ // Değişiklik burada
     apiKey: "sandbox-E4bEfyI3DGGIv4xzvXfxOep8e1wSA56",
     secretKey: "sandbox-gf39QdF4tVtFM0oRaPHy1e3D6zyCUNPy",
     uri: "https://sandbox-api.iyzipay.com",
@@ -20,15 +20,15 @@ exports.createIyzicoPayment = functions.region('europe-west1').https.onCall(asyn
     const conversationId = `conv-${userId}-${Date.now()}`;
 
     const request = {
-        locale: iyzico.LOCALE.TR,
+        locale: Iyzipay.LOCALE.TR, // Değişiklik burada
         conversationId: conversationId,
         price: parseFloat(price).toFixed(2),
         paidPrice: parseFloat(paidPrice).toFixed(2),
-        currency: iyzico.CURRENCY.TRY,
+        currency: Iyzipay.CURRENCY.TRY, // Değişiklik burada
         installments: '1',
         basketId: `basket-${userId}-${Date.now()}`,
-        paymentChannel: iyzico.PAYMENT_CHANNEL.WEB,
-        paymentGroup: iyzico.PAYMENT_GROUP.PRODUCT,
+        paymentChannel: Iyzipay.PAYMENT_CHANNEL.WEB, // Değişiklik burada
+        paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT, // Değişiklik burada
         paymentCard: paymentCard,
         buyer: buyer,
         shippingAddress: shippingAddress,
