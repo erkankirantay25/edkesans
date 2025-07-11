@@ -170,7 +170,6 @@
         </div>
     </footer>
 
-
     <script src="https://static.iyzipay.com/v1/iyzico.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -220,8 +219,10 @@
         
         const showPaymentForm = () => {
             checkoutButton.style.display = 'none';
+            iyzicoForm.style.transition = 'max-height 0.5s ease-in-out, opacity 0.5s ease-in-out';
             iyzicoForm.classList.remove('max-h-0', 'opacity-0');
-            iyzicoForm.classList.add('max-h-[500px]', 'opacity-100');
+            iyzicoForm.style.maxHeight = iyzicoForm.scrollHeight + "px";
+            iyzicoForm.classList.add('opacity-100');
         };
 
         const showQuotaModal = (message, onConfirm) => {
@@ -274,17 +275,60 @@
             }
         };
 
-        const finalizeOrder = async (isPending) => { const subtotal = cart.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0); const shippingCost = selectedShippingCarrier.price; try { const batch = writeBatch(db); const orderRef = doc(collection(db, "orders")); batch.set(orderRef, { userId: currentUser.uid, customerInfo: { name: userData.name, email: userData.email, phone: userData.phone || null }, shippingAddress: userData.address, shippingCarrier: { name: selectedShippingCarrier.name, price: selectedShippingCarrier.price }, items: cart, subtotalAmount: subtotal, shippingAmount: shippingCost, totalAmount: subtotal + shippingCost, status: isPending ? 'Kota Bekleniyor' : 'Yeni Sipariş', createdAt: serverTimestamp() }); for (let i = 0; i < cart.length; i++) { const item = cart[i]; const productRef = doc(db, "products", item.productId); const totalGramOrdered = item.gram * item.quantity; batch.update(productRef, { totalDemand: increment(totalGramOrdered), buyers: arrayUnion({ userId: currentUser.uid, userCode: userData.userCode || currentUser.uid.substring(0,6).toUpperCase(), timestamp: serverTimestamp() }) }); } await batch.commit(); localStorage.removeItem('esanscim_cart'); alert('Ödeme başarılı! Siparişiniz oluşturuldu.'); window.location.href = 'profile.html'; } catch (error) { console.error("Sipariş oluşturma hatası:", error); paymentErrorMessage.textContent = 'Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.'; iyzicoPayButton.disabled = false; iyzicoPayButton.textContent = 'Güvenli Ödeme Yap'; } };
+        const finalizeOrder = async (isPending) => {
+            const subtotal = cart.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
+            const shippingCost = selectedShippingCarrier.price;
+            try {
+                const batch = writeBatch(db);
+                const orderRef = doc(collection(db, "orders"));
+                batch.set(orderRef, { userId: currentUser.uid, customerInfo: { name: userData.name, email: userData.email, phone: userData.phone || null }, shippingAddress: userData.address, shippingCarrier: { name: selectedShippingCarrier.name, price: selectedShippingCarrier.price }, items: cart, subtotalAmount: subtotal, shippingAmount: shippingCost, totalAmount: subtotal + shippingCost, status: isPending ? 'Kota Bekleniyor' : 'Yeni Sipariş', createdAt: serverTimestamp() });
+                for (let i = 0; i < cart.length; i++) {
+                    const item = cart[i];
+                    const productRef = doc(db, "products", item.productId);
+                    const totalGramOrdered = item.gram * item.quantity;
+                    batch.update(productRef, { totalDemand: increment(totalGramOrdered), buyers: arrayUnion({ userId: currentUser.uid, userCode: userData.userCode || currentUser.uid.substring(0, 6).toUpperCase(), timestamp: serverTimestamp() }) });
+                }
+                await batch.commit();
+                localStorage.removeItem('esanscim_cart');
+                alert('Ödeme başarılı! Siparişiniz oluşturuldu.');
+                window.location.href = 'profile.html';
+            } catch (error) {
+                console.error("Sipariş oluşturma hatası:", error);
+                paymentErrorMessage.textContent = 'Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.';
+                iyzicoPayButton.disabled = false;
+                iyzicoPayButton.textContent = 'Güvenli Ödeme Yap';
+            }
+        };
         
-        onAuthStateChanged(auth, async (user) => { try { if (user) { currentUser = user; const userDoc = await getDoc(doc(db, "users", user.uid)); userData = userDoc.exists() ? userDoc.data() : { name: user.displayName, email: user.email }; await renderPageContent(); } else { currentUser = null; userData = null; showState(states.authRequired); } } catch (error) { console.error("Sepet sayfası yüklenirken hata oluştu:", error); pageContainer.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-md text-center max-w-2xl mx-auto"><h2 class="text-2xl font-bold text-red-600 mb-4">Bir Hata Oluştu</h2><p class="text-gray-600 mb-6">Sayfa yüklenirken beklenmedik bir sorun oluştu.</p></div>`; } });
+        onAuthStateChanged(auth, async (user) => {
+            try {
+                if (user) {
+                    currentUser = user;
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    userData = userDoc.exists() ? userDoc.data() : { name: user.displayName, email: user.email };
+                    await renderPageContent();
+                } else {
+                    currentUser = null;
+                    userData = null;
+                    showState(states.authRequired);
+                }
+            } catch (error) {
+                console.error("Sepet sayfası yüklenirken hata oluştu:", error);
+                pageContainer.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-md text-center max-w-2xl mx-auto"><h2 class="text-2xl font-bold text-red-600 mb-4">Bir Hata Oluştu</h2><p class="text-gray-600 mb-6">Sayfa yüklenirken beklenmedik bir sorun oluştu.</p></div>`;
+            }
+        });
         
         document.querySelectorAll('.agreement-checkbox').forEach(checkbox => checkbox.addEventListener('change', updateCheckoutButtonState));
         checkoutButton.addEventListener('click', handleCheckout);
         
         iyzicoPayButton.addEventListener('click', async () => { 
-            iyzicoPayButton.disabled = true; iyzicoPayButton.textContent = 'İşleniyor...'; paymentErrorMessage.textContent = ''; 
-            const expiry = document.getElementById('card-expiry').value.split('/'); 
-            const subtotal = cart.reduce((s, i) => s + (i.price * i.quantity), 0); 
+            iyzicoPayButton.disabled = true;
+            iyzicoPayButton.textContent = 'İşleniyor...';
+            paymentErrorMessage.textContent = '';
+            
+            const expiry = document.getElementById('card-expiry').value.split('/');
+            const subtotal = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
+            
             const paymentData = { 
                 paymentCard: { cardHolderName: document.getElementById('card-holder-name').value, cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''), expireYear: `20${expiry[1]}`, expireMonth: expiry[0], cvc: document.getElementById('card-cvc').value }, 
                 buyer: { id: currentUser.uid, name: userData.name.split(' ')[0], surname: userData.name.split(' ').slice(1).join(' ') || 'N/A', gsmNumber: userData.phone || '+905555555555', email: userData.email, identityNumber: '11111111111', lastLoginDate: new Date().toISOString().slice(0, 19).replace('T', ' '), registrationDate: new Date(currentUser.metadata.creationTime).toISOString().slice(0, 19).replace('T', ' '), registrationAddress: userData.address, ip: '85.34.78.112', city: 'Istanbul', country: 'Turkey', zipCode: '34732' }, 
@@ -294,6 +338,7 @@
                 price: subtotal.toFixed(2), 
                 paidPrice: (subtotal + selectedShippingCarrier.price).toFixed(2), 
             }; 
+            
             try { 
                 const result = await createIyzicoPayment(paymentData); 
                 if (result.data.status === 'success') { 
