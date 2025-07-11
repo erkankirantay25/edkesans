@@ -1,6 +1,6 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const iyzico = require("iyzico");
+const iyzico = require("iyzipay");
 
 admin.initializeApp();
 
