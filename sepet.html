@@ -69,7 +69,6 @@
                                         <span class="ml-2 text-xs text-gray-600"><a href="gizlilik-politikasi.html" target="_blank" class="text-indigo-600 hover:underline font-medium">Gizlilik Politikası ve KVKK Aydınlatma Metnini</a> okudum, onaylıyorum.</span>
                                     </label>
 
-                                    <!-- YENİ EKLENEN BİLGİLENDİRME KUTULARI -->
                                     <div class="mt-4 pt-4 border-t">
                                         <p class="text-sm font-semibold mb-2 text-gray-700">Önemli Bilgilendirme:</p>
                                         <div class="space-y-3">
@@ -87,7 +86,6 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <!-- YENİ BÖLÜM SONU -->
 
                                 </div>
 
@@ -128,7 +126,6 @@
         </div>
     </main>
 
-    <!-- YENİ EKLENEN FOOTER -->
     <footer class="bg-white mt-12 py-8 border-t">
         <div class="container mx-auto px-6 text-center text-gray-600">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -150,7 +147,6 @@
                 <div>
                     <h3 class="font-bold text-gray-800 mb-2">Güvenli Ödeme</h3>
                     <div class="flex justify-center items-center space-x-4">
-                        <!-- İkonları veya logoları buraya ekleyebilirsiniz. Örnek olarak metin kullanılmıştır. -->
                         <img src="/images/iyzico-ile-ode.png" alt="iyzico ile Öde" class="h-8">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Mastercard_2019_logo.svg" alt="MasterCard" class="h-8">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" class="h-8">
@@ -160,7 +156,6 @@
             <p class="text-xs mt-8">© 2025 Esanscim. Tüm hakları saklıdır.</p>
         </div>
     </footer>
-    <!-- FOOTER SONU -->
 
 
     <script src="https://static.iyzipay.com/v1/iyzico.js"></script>
@@ -170,12 +165,11 @@
         import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp, writeBatch, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
-        // Firebase config'i burada aynı kalır...
         const firebaseConfig = { apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA", authDomain: "esanscim.firebaseapp.com", projectId: "esanscim", storageBucket: "esanscim.firebasestorage.app", messagingSenderId: "570763360884", appId: "1:570763360884:web:47562ad20c047b9defaf21" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const functions = getFunctions(app, 'europe-west1'); // veya sizin bölgeniz
+        const functions = getFunctions(app, 'europe-west1');
         const createIyzicoPayment = httpsCallable(functions, 'createIyzicoPayment');
 
         const pageContainer = document.getElementById('page-container');
@@ -201,7 +195,6 @@
 
         const renderCartItems = () => { cartItemsContainer.innerHTML = cart.map(item => `<div class="flex items-center py-4 border-b last:border-b-0"><img src="${item.imageUrl || './images/default-esans.png'}" alt="${item.name || 'Ürün'}" class="w-20 h-20 object-cover rounded-md mr-4"><div class="flex-grow"><p class="font-semibold">${item.name || 'Bilinmeyen Ürün'}</p><p class="text-sm text-gray-500">${item.gram || '?'}gr</p><p class="text-sm font-bold text-indigo-600">${(item.price || 0).toFixed(2)} TL</p></div><div class="flex items-center mx-4"><button class="quantity-btn h-8 w-8 text-lg rounded-full hover:bg-gray-200 transition-colors" data-id="${item.id}" data-change="-1">-</button><span class="w-12 text-center font-medium">${item.quantity || 1}</span><button class="quantity-btn h-8 w-8 text-lg rounded-full hover:bg-gray-200 transition-colors" data-id="${item.id}" data-change="1">+</button></div><button class="remove-btn text-gray-400 hover:text-red-500 text-2xl font-light w-8 h-8 flex items-center justify-center" data-id="${item.id}">×</button></div>`).join(''); document.querySelectorAll('.quantity-btn').forEach(btn => btn.onclick = (e) => updateQuantity(e.currentTarget.dataset.id, parseInt(e.currentTarget.dataset.change))); document.querySelectorAll('.remove-btn').forEach(btn => btn.onclick = (e) => removeItem(e.currentTarget.dataset.id)); };
         
-        // Bu fonksiyon, yeni eklenen checkbox'ları da kontrol edecek şekilde güncellendi. (Aslında kod aynı kalıyor, çünkü hepsi aynı class'a sahip)
         const updateCheckoutButtonState = () => { const isAddressAvailable = userData && userData.address && userData.address.trim() !== ''; const allAgreementsChecked = Array.from(document.querySelectorAll('.agreement-checkbox')).every(cb => cb.checked); checkoutButton.disabled = !allAgreementsChecked || !isAddressAvailable || !selectedShippingCarrier; };
 
         const handleShippingSelection = (event) => { selectedShippingCarrier = activeShippingCarriers.find(c => c.name === event.target.value) || null; renderSummary(); };
@@ -261,7 +254,6 @@
         
         onAuthStateChanged(auth, async (user) => { try { if (user) { currentUser = user; const userDoc = await getDoc(doc(db, "users", user.uid)); userData = userDoc.exists() ? userDoc.data() : { name: user.displayName, email: user.email }; await renderPageContent(); } else { currentUser = null; userData = null; showState(states.authRequired); } } catch (error) { console.error("Sepet sayfası yüklenirken hata oluştu:", error); pageContainer.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-md text-center max-w-2xl mx-auto"><h2 class="text-2xl font-bold text-red-600 mb-4">Bir Hata Oluştu</h2><p class="text-gray-600 mb-6">Sayfa yüklenirken beklenmedik bir sorun oluştu.</p></div>`; } });
         
-        // Bu event listener, tüm checkbox'ları (yeni eklenenler dahil) dinler.
         document.querySelectorAll('.agreement-checkbox').forEach(checkbox => checkbox.addEventListener('change', updateCheckoutButtonState));
         checkoutButton.addEventListener('click', handleCheckout);
         
