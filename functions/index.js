@@ -22,30 +22,32 @@ exports.createIyzicoPayment = functions.region('europe-west1').https.onCall(asyn
 
   const userId = context.auth.uid;
   const userIp = context.rawRequest.ip;
-  const { basketItems, paymentCard, shippingCarrierName } = data;
+  const { basketItems, paymentCard, shippingCarrierName } = data; // Kargo objesi yerine sadece 'shippingCarrierName' alıyoruz.
 
   if (!shippingCarrierName) {
       throw new functions.https.HttpsError('invalid-argument', 'Kargo seçimi yapılmamış.');
   }
 
   try {
-    const userDoc = await db.collection('users').doc(userId).get();
-    if (!userDoc.exists) {
-      throw new functions.https.HttpsError('not-found', 'Kullanıcı bulunamadı.');
-    }
-    const userData = userDoc.data();
-
+    // Sunucu tarafında kargo ücretini güvenli bir şekilde al
     const shippingOptionsDoc = await db.collection('settings').doc('shippingOptions').get();
     if (!shippingOptionsDoc.exists) {
-        throw new functions.https.HttpsError('internal', 'Kargo seçenekleri bulunamadı.');
+        throw new functions.https.HttpsError('internal', 'Sistemde kargo seçenekleri bulunamadı.');
     }
     const allCarriers = shippingOptionsDoc.data().carriers || [];
     const selectedCarrier = allCarriers.find(c => c.name === shippingCarrierName && c.active);
 
     if (!selectedCarrier) {
-        throw new functions.https.HttpsError('not-found', 'Seçilen kargo firması geçerli değil.');
+        throw new functions.https.HttpsError('not-found', 'Seçilen kargo firması geçersiz veya aktif değil.');
     }
-    const shippingPrice = parseFloat(selectedCarrier.price);
+    const shippingPrice = parseFloat(selectedCarrier.price); // Fiyatı veritabanından al
+
+    // Geri kalan işlemler aynı
+    const userDoc = await db.collection('users').doc(userId).get();
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Kullanıcı bulunamadı.');
+    }
+    const userData = userDoc.data();
 
     const productPromises = basketItems.map(item => db.collection('products').doc(item.productId).get());
     const productSnapshots = await Promise.all(productPromises);
