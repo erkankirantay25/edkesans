@@ -128,7 +128,6 @@
         </div>
     </main>
 
-    <!-- ESTETİK UYARI POP-UP (MODAL) -->
     <div id="quota-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div id="quota-modal-content" class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full modal-enter">
             <h3 class="text-xl font-bold text-gray-800 mb-3">Önemli Uyarı</h3>
@@ -139,11 +138,35 @@
             </div>
         </div>
     </div>
-    <!-- POP-UP SONU -->
 
     <footer class="bg-white mt-12 py-8 border-t">
         <div class="container mx-auto px-6 text-center text-gray-600">
-            <!-- Footer içeriği aynı kalacak -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-2">İletişim</h3>
+                    <p class="text-sm">E-posta: edkesans@gmail.com</p>
+                    <p class="text-sm">Telefon: +90 540 010 49 25</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-2">Yasal Bilgiler</h3>
+                    <div class="flex flex-col space-y-1">
+                        <a href="hakkimizda.html" class="text-sm hover:underline">Hakkımızda</a>
+                        <a href="mesafeli-satis-sozlesmesi.html" class="text-sm hover:underline">Mesafeli Satış Sözleşmesi</a>
+                        <a href="gizlilik-politikasi.html" class="text-sm hover:underline">Gizlilik Politikası</a>
+                        <a href="kullanim-kosullari.html" class="text-sm hover:underline">Kullanım Koşulları</a>
+                        <a href="teslimat-iade.html" class="text-sm hover:underline">Teslimat ve İade Şartları</a>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-800 mb-2">Güvenli Ödeme</h3>
+                    <div class="flex justify-center items-center space-x-4">
+                        <img src="/images/iyzico-ile-ode.png" alt="iyzico ile Öde" class="h-8">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Mastercard_2019_logo.svg" alt="MasterCard" class="h-8">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" class="h-8">
+                    </div>
+                </div>
+            </div>
+            <p class="text-xs mt-8">© 2025 Esanscim. Tüm hakları saklıdır.</p>
         </div>
     </footer>
 
@@ -209,14 +232,12 @@
             const confirmHandler = () => {
                 onConfirm();
                 hideQuotaModal();
-                quotaModalConfirm.removeEventListener('click', confirmHandler);
             };
             
             const rejectHandler = () => {
                 checkoutButton.disabled = false;
                 checkoutButton.textContent = 'Ödemeye Geç';
                 hideQuotaModal();
-                quotaModalReject.removeEventListener('click', rejectHandler);
             };
 
             quotaModalConfirm.addEventListener('click', confirmHandler, { once: true });
@@ -231,12 +252,12 @@
         const handleCheckout = async () => {
             checkoutButton.disabled = true;
             checkoutButton.textContent = 'Kontrol Ediliyor...';
-            let quotaWarningMessage = '';
+            let pendingItemsList = '';
             isAnyItemPendingQuotaForPayment = false;
+
             const productDocsPromises = cart.map(item => getDoc(doc(db, "products", item.productId)));
             const productDocs = await Promise.all(productDocsPromises);
             
-            let pendingItemsList = '';
             for (let i = 0; i < cart.length; i++) {
                 const productData = productDocs[i].data();
                 if (productData && productData.quota > (productData.totalDemand || 0)) {
@@ -247,19 +268,46 @@
 
             if (isAnyItemPendingQuotaForPayment) {
                 const fullMessage = `Aşağıdaki ürün(ler) henüz minimum sipariş kotasına ulaşmamıştır. Siparişiniz, ürün(ler) kotayı doldurduğunda işleme alınacaktır:\n\n${pendingItemsList}\nBu şekilde devam etmek istediğinize emin misiniz?`;
-                showQuotaModal(fullMessage, () => {
-                    showPaymentForm();
-                });
+                showQuotaModal(fullMessage, showPaymentForm);
             } else {
                 showPaymentForm();
             }
         };
 
         const finalizeOrder = async (isPending) => { const subtotal = cart.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0); const shippingCost = selectedShippingCarrier.price; try { const batch = writeBatch(db); const orderRef = doc(collection(db, "orders")); batch.set(orderRef, { userId: currentUser.uid, customerInfo: { name: userData.name, email: userData.email, phone: userData.phone || null }, shippingAddress: userData.address, shippingCarrier: { name: selectedShippingCarrier.name, price: selectedShippingCarrier.price }, items: cart, subtotalAmount: subtotal, shippingAmount: shippingCost, totalAmount: subtotal + shippingCost, status: isPending ? 'Kota Bekleniyor' : 'Yeni Sipariş', createdAt: serverTimestamp() }); for (let i = 0; i < cart.length; i++) { const item = cart[i]; const productRef = doc(db, "products", item.productId); const totalGramOrdered = item.gram * item.quantity; batch.update(productRef, { totalDemand: increment(totalGramOrdered), buyers: arrayUnion({ userId: currentUser.uid, userCode: userData.userCode || currentUser.uid.substring(0,6).toUpperCase(), timestamp: serverTimestamp() }) }); } await batch.commit(); localStorage.removeItem('esanscim_cart'); alert('Ödeme başarılı! Siparişiniz oluşturuldu.'); window.location.href = 'profile.html'; } catch (error) { console.error("Sipariş oluşturma hatası:", error); paymentErrorMessage.textContent = 'Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.'; iyzicoPayButton.disabled = false; iyzicoPayButton.textContent = 'Güvenli Ödeme Yap'; } };
+        
         onAuthStateChanged(auth, async (user) => { try { if (user) { currentUser = user; const userDoc = await getDoc(doc(db, "users", user.uid)); userData = userDoc.exists() ? userDoc.data() : { name: user.displayName, email: user.email }; await renderPageContent(); } else { currentUser = null; userData = null; showState(states.authRequired); } } catch (error) { console.error("Sepet sayfası yüklenirken hata oluştu:", error); pageContainer.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-md text-center max-w-2xl mx-auto"><h2 class="text-2xl font-bold text-red-600 mb-4">Bir Hata Oluştu</h2><p class="text-gray-600 mb-6">Sayfa yüklenirken beklenmedik bir sorun oluştu.</p></div>`; } });
+        
         document.querySelectorAll('.agreement-checkbox').forEach(checkbox => checkbox.addEventListener('change', updateCheckoutButtonState));
         checkoutButton.addEventListener('click', handleCheckout);
-        iyzicoPayButton.addEventListener('click', async () => { iyzicoPayButton.disabled = true; iyzicoPayButton.textContent = 'İşleniyor...'; paymentErrorMessage.textContent = ''; const expiry = document.getElementById('card-expiry').value.split('/'); const subtotal = cart.reduce((s, i) => s + (i.price * i.quantity), 0); const paymentData = { paymentCard: { cardHolderName: document.getElementById('card-holder-name').value, cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''), expireYear: `20${expiry[1]}`, expireMonth: expiry[0], cvc: document.getElementById('card-cvc').value }, buyer: { id: currentUser.uid, name: userData.name.split(' ')[0], surname: userData.name.split(' ').slice(1).join(' ') || 'N/A', gsmNumber: userData.phone || '+905555555555', email: userData.email, identityNumber: '11111111111', lastLoginDate: new Date().toISOString().slice(0, 19).replace('T', ' '), registrationDate: new Date(currentUser.metadata.creationTime).toISOString().slice(0, 19).replace('T', ' '), registrationAddress: userData.address, ip: '85.34.78.112', city: 'Istanbul', country: 'Turkey', zipCode: '34732' }, shippingAddress: { contactName: userData.name, city: 'Istanbul', country: 'Turkey', address: userData.address, zipCode: '34732' }, billingAddress: { contactName: userData.name, city: 'Istanbul', country: 'Turkey', address: userData.address, zipCode: '34732' }, basketItems: cart.map(item => ({ id: item.productId, name: item.name, category1: item.category || 'Esans', price: (item.price * item.quantity).toFixed(2), itemType: 'PHYSICAL' })), price: subtotal.toFixed(2), paidPrice: (subtotal + selectedShippingCarrier.price).toFixed(2), }; try { const result = await createIyzicoPayment(paymentData); if (result.data.status === 'success') { await finalizeOrder(isAnyItemPendingQuotaForPayment); } else { throw new Error(result.data.errorMessage || 'Ödeme başarısız.'); } } catch (error) { console.error("Iyzico ödeme hatası:", error); paymentErrorMessage.textContent = error.message || 'Ödeme alınamadı. Kart bilgilerinizi kontrol edin.'; iyzicoPayButton.disabled = false; iyzicoPayButton.textContent = 'Güvenli Ödeme Yap'; } });
+        
+        iyzicoPayButton.addEventListener('click', async () => { 
+            iyzicoPayButton.disabled = true; iyzicoPayButton.textContent = 'İşleniyor...'; paymentErrorMessage.textContent = ''; 
+            const expiry = document.getElementById('card-expiry').value.split('/'); 
+            const subtotal = cart.reduce((s, i) => s + (i.price * i.quantity), 0); 
+            const paymentData = { 
+                paymentCard: { cardHolderName: document.getElementById('card-holder-name').value, cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''), expireYear: `20${expiry[1]}`, expireMonth: expiry[0], cvc: document.getElementById('card-cvc').value }, 
+                buyer: { id: currentUser.uid, name: userData.name.split(' ')[0], surname: userData.name.split(' ').slice(1).join(' ') || 'N/A', gsmNumber: userData.phone || '+905555555555', email: userData.email, identityNumber: '11111111111', lastLoginDate: new Date().toISOString().slice(0, 19).replace('T', ' '), registrationDate: new Date(currentUser.metadata.creationTime).toISOString().slice(0, 19).replace('T', ' '), registrationAddress: userData.address, ip: '85.34.78.112', city: 'Istanbul', country: 'Turkey', zipCode: '34732' }, 
+                shippingAddress: { contactName: userData.name, city: 'Istanbul', country: 'Turkey', address: userData.address, zipCode: '34732' }, 
+                billingAddress: { contactName: userData.name, city: 'Istanbul', country: 'Turkey', address: userData.address, zipCode: '34732' }, 
+                basketItems: cart.map(item => ({ id: item.productId, name: item.name, category1: item.category || 'Esans', price: (item.price * item.quantity).toFixed(2), itemType: 'PHYSICAL' })), 
+                price: subtotal.toFixed(2), 
+                paidPrice: (subtotal + selectedShippingCarrier.price).toFixed(2), 
+            }; 
+            try { 
+                const result = await createIyzicoPayment(paymentData); 
+                if (result.data.status === 'success') { 
+                    await finalizeOrder(isAnyItemPendingQuotaForPayment); 
+                } else { 
+                    throw new Error(result.data.errorMessage || 'Ödeme başarısız.'); 
+                } 
+            } catch (error) { 
+                console.error("Iyzico ödeme hatası:", error); 
+                paymentErrorMessage.textContent = error.message || 'Ödeme alınamadı. Kart bilgilerinizi kontrol edin.'; 
+                iyzicoPayButton.disabled = false; 
+                iyzicoPayButton.textContent = 'Güvenli Ödeme Yap'; 
+            } 
+        });
     </script>
 </body>
 </html>
