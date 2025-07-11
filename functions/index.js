@@ -22,32 +22,32 @@ exports.createIyzicoPayment = functions.region('europe-west1').https.onCall(asyn
 
   const userId = context.auth.uid;
   const userIp = context.rawRequest.ip;
-  const { basketItems, paymentCard, shippingCarrierName } = data; // Kargo objesi yerine sadece 'shippingCarrierName' alıyoruz.
+  const { basketItems, paymentCard, shippingCarrierName } = data;
 
   if (!shippingCarrierName) {
-      throw new functions.https.HttpsError('invalid-argument', 'Kargo seçimi yapılmamış.');
+      throw new functions.https.HttpsError('invalid-argument', 'Lütfen bir kargo firması seçin.');
   }
 
   try {
-    // Sunucu tarafında kargo ücretini güvenli bir şekilde al
-    const shippingOptionsDoc = await db.collection('settings').doc('shippingOptions').get();
+    const userDocPromise = db.collection('users').doc(userId).get();
+    const shippingOptionsPromise = db.collection('settings').doc('shippingOptions').get();
+    const [userDoc, shippingOptionsDoc] = await Promise.all([userDocPromise, shippingOptionsPromise]);
+
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Kullanıcı veritabanında bulunamadı.');
+    }
+    const userData = userDoc.data();
+
     if (!shippingOptionsDoc.exists) {
-        throw new functions.https.HttpsError('internal', 'Sistemde kargo seçenekleri bulunamadı.');
+        throw new functions.https.HttpsError('internal', 'Sistemde kargo ayarları yapılandırılmamış.');
     }
     const allCarriers = shippingOptionsDoc.data().carriers || [];
     const selectedCarrier = allCarriers.find(c => c.name === shippingCarrierName && c.active);
 
     if (!selectedCarrier) {
-        throw new functions.https.HttpsError('not-found', 'Seçilen kargo firması geçersiz veya aktif değil.');
+        throw new functions.https.HttpsError('not-found', 'Seçtiğiniz kargo firması şu anda geçerli değil.');
     }
-    const shippingPrice = parseFloat(selectedCarrier.price); // Fiyatı veritabanından al
-
-    // Geri kalan işlemler aynı
-    const userDoc = await db.collection('users').doc(userId).get();
-    if (!userDoc.exists) {
-      throw new functions.https.HttpsError('not-found', 'Kullanıcı bulunamadı.');
-    }
-    const userData = userDoc.data();
+    const shippingPrice = parseFloat(selectedCarrier.price);
 
     const productPromises = basketItems.map(item => db.collection('products').doc(item.productId).get());
     const productSnapshots = await Promise.all(productPromises);
@@ -55,17 +55,21 @@ exports.createIyzicoPayment = functions.region('europe-west1').https.onCall(asyn
     let subtotal = 0;
     const finalBasketItems = productSnapshots.map((doc, index) => {
       if (!doc.exists) {
-        throw new functions.https.HttpsError('not-found', `Sepetteki bir ürün (ID: ${basketItems[index].productId}) veritabanında bulunamadı.`);
+        throw new functions.https.HttpsError('not-found', `Sepetinizdeki bir ürün artık mevcut değil (ID: ${basketItems[index].productId}).`);
       }
       const productData = doc.data();
       const itemQuantity = basketItems[index].quantity;
-      const itemPrice = parseFloat(productData.price);
-      subtotal += itemPrice * itemQuantity;
+      const gramaj = basketItems[index].gram;
+      
+      const calculatedPrice = (parseFloat(productData.unitPrice) / 50) * gramaj;
+      
+      subtotal += calculatedPrice * itemQuantity;
+
       return {
         id: doc.id,
-        name: productData.name,
+        name: `${productData.name} (${gramaj}gr)`,
         category1: productData.category || 'Esans',
-        price: (itemPrice * itemQuantity).toFixed(2),
+        price: (calculatedPrice * itemQuantity).toFixed(2),
         itemType: Iyzipay.BASKET_ITEM_TYPE.PHYSICAL,
       };
     });
