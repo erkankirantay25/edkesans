@@ -3,75 +3,126 @@ const admin = require("firebase-admin");
 const Iyzipay = require("iyzipay");
 
 try {
-    admin.initializeApp();
+  admin.initializeApp();
 } catch (e) {
-    console.error("Firebase admin initialization error:", e);
+  // Initialization error caught
 }
+const db = admin.firestore();
 
-let iyzico;
-try {
-    iyzico = new Iyzipay({
-        apiKey: "sandbox-E4bEfyI3DGGIv4xzvXfxOep8e1wSA56",
-        secretKey: "sandbox-gf39QdF4tVtFM0oRaPHy1e3D6zyCUNPy",
-        uri: "https://sandbox-api.iyzipay.com",
-    });
-} catch (e) {
-    console.error("Iyzipay initialization error:", e);
-}
-
+// API Anahtarları doğrudan koda yazıldı (GitHub iş akışınıza uygun olarak)
+const iyzico = new Iyzipay({
+    apiKey: "sandbox-E4bEfyI3DGGIv4xzvXfxOep8eI1wSAS6",
+    secretKey: "sandbox-gf39QdF4tVtFM0oRaPhY1e3D6zyCUNPy",
+    uri: "https://sandbox-api.iyzipay.com",
+});
 
 exports.createIyzicoPayment = functions.region('europe-west1').https.onCall(async (data, context) => {
-    functions.logger.info("Function triggered with data:", data);
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Bu işlemi yapmak için giriş yapmalısınız.');
+  }
 
-    if (!context.auth) {
-        functions.logger.error("Authentication check failed.");
-        throw new functions.https.HttpsError('unauthenticated', 'Bu işlemi yapmak için giriş yapmalısınız.');
+  const userId = context.auth.uid;
+  const userIp = context.rawRequest.ip;
+  const { basketItems, shippingCarrier } = data;
+
+  try {
+    const userDoc = await db.collection('users').doc(userId).get();
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Kullanıcı bulunamadı.');
     }
+    const userData = userDoc.data();
 
-    if (!iyzico) {
-        functions.logger.error("Iyzico client is not initialized.");
-        throw new functions.https.HttpsError('internal', 'Ödeme sağlayıcısı başlatılamadı.');
-    }
+    const productPromises = basketItems.map(item => db.collection('products').doc(item.productId).get());
+    const productSnapshots = await Promise.all(productPromises);
+    
+    let subtotal = 0;
+    const finalBasketItems = productSnapshots.map((doc, index) => {
+      if (!doc.exists) {
+        throw new functions.https.HttpsError('not-found', `Sepetteki bir ürün (ID: ${basketItems[index].productId}) veritabanında bulunamadı.`);
+      }
+      const productData = doc.data();
+      const itemQuantity = basketItems[index].quantity;
+      const itemPrice = parseFloat(productData.price);
 
-    const { paymentCard, basketItems, buyer, shippingAddress, billingAddress, price, paidPrice } = data;
-    const userId = context.auth.uid;
-    const conversationId = `conv-${userId}-${Date.now()}`;
+      subtotal += itemPrice * itemQuantity;
+
+      return {
+        id: doc.id,
+        name: productData.name,
+        category1: productData.category || 'Esans',
+        price: (itemPrice * itemQuantity).toFixed(2),
+        itemType: Iyzipay.BASKET_ITEM_TYPE.PHYSICAL,
+      };
+    });
+
+    const shippingPrice = parseFloat(shippingCarrier.price);
+    const paidPrice = subtotal + shippingPrice;
 
     const request = {
-        locale: Iyzipay.LOCALE.TR,
-        conversationId: conversationId,
-        price: parseFloat(price).toFixed(2),
-        paidPrice: parseFloat(paidPrice).toFixed(2),
-        currency: Iyzipay.CURRENCY.TRY,
-        installments: '1',
-        basketId: `basket-${userId}-${Date.now()}`,
-        paymentChannel: Iyzipay.PAYMENT_CHANNEL.WEB,
-        paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
-        paymentCard, buyer, shippingAddress, billingAddress, basketItems,
+      locale: Iyzipay.LOCALE.TR,
+      conversationId: `conv-${userId}-${Date.now()}`,
+      price: subtotal.toFixed(2),
+      paidPrice: paidPrice.toFixed(2),
+      currency: Iyzipay.CURRENCY.TRY,
+      installment: '1',
+      basketId: `basket-${userId}-${Date.now()}`,
+      paymentChannel: Iyzipay.PAYMENT_CHANNEL.WEB,
+      paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT,
+      paymentCard: data.paymentCard,
+      buyer: {
+        id: userId,
+        name: userData.name.split(' ')[0],
+        surname: userData.name.split(' ').slice(1).join(' ') || 'N/A',
+        gsmNumber: userData.phone || '+905555555555',
+        email: userData.email,
+        identityNumber: '11111111111',
+        lastLoginDate: new Date(context.auth.token.auth_time * 1000).toISOString().slice(0, 19).replace('T', ' '),
+        registrationDate: new Date(userData.createdAt?.toDate() || Date.now()).toISOString().slice(0, 19).replace('T', ' '),
+        registrationAddress: userData.address,
+        ip: userIp,
+        city: 'Istanbul',
+        country: 'Turkey',
+        zipCode: '34732',
+      },
+      shippingAddress: {
+        contactName: userData.name,
+        city: 'Istanbul',
+        country: 'Turkey',
+        address: userData.address,
+        zipCode: '34732',
+      },
+      billingAddress: {
+        contactName: userData.name,
+        city: 'Istanbul',
+        country: 'Turkey',
+        address: userData.address,
+        zipCode: '34732',
+      },
+      basketItems: finalBasketItems,
     };
 
-    functions.logger.info("Sending request to Iyzico:", request);
-
-    try {
-        const result = await new Promise((resolve, reject) => {
-            iyzico.payment.create(request, (err, result) => {
-                if (err) {
-                    functions.logger.error("Iyzico API Error Response:", err);
-                    reject(err);
-                } else {
-                    functions.logger.info("Iyzico API Success Response:", result);
-                    resolve(result);
-                }
-            });
-        });
-        
-        if (result.status === 'success') {
-            return result;
-        } else {
-            throw new functions.https.HttpsError('aborted', result.errorMessage || 'Ödeme sağlayıcısı tarafından reddedildi.');
+    const result = await new Promise((resolve, reject) => {
+      iyzico.payment.create(request, (err, res) => {
+        if (err) {
+          functions.logger.error("Iyzico Callback Error:", err);
+          return reject(err);
         }
-    } catch (error) {
-        functions.logger.error("General error in function execution:", error);
-        throw new functions.https.HttpsError('internal', error.message || 'Ödeme sunucusunda beklenmedik bir hata oluştu.');
+        functions.logger.info("Iyzico API Success Response:", res);
+        return resolve(res);
+      });
+    });
+
+    if (result.status === 'success') {
+      return result;
+    } else {
+      throw new functions.https.HttpsError('aborted', result.errorMessage || 'Ödeme sağlayıcısı tarafından reddedildi.');
     }
+
+  } catch (error) {
+    functions.logger.error("General error in function execution:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError('internal', error.message || 'Ödeme sunucusunda beklenmedik bir hata oluştu.');
+  }
 });
