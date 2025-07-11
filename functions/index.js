@@ -1,10 +1,11 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const Iyzipay = require("iyzipay"); // Değişiklik burada
+const Iyzipay = require("iyzipay"); // Paketi bu şekilde çağırıyoruz
 
 admin.initializeApp();
 
-const iyzicoClient = new Iyzipay({ // Değişiklik burada
+// istemciyi paketten oluşturuyoruz
+const iyzico = new Iyzipay({
     apiKey: "sandbox-E4bEfyI3DGGIv4xzvXfxOep8e1wSA56",
     secretKey: "sandbox-gf39QdF4tVtFM0oRaPHy1e3D6zyCUNPy",
     uri: "https://sandbox-api.iyzipay.com",
@@ -20,15 +21,15 @@ exports.createIyzicoPayment = functions.region('europe-west1').https.onCall(asyn
     const conversationId = `conv-${userId}-${Date.now()}`;
 
     const request = {
-        locale: Iyzipay.LOCALE.TR, // Değişiklik burada
+        locale: Iyzipay.LOCALE.TR, // Paketin kendisini kullanıyoruz
         conversationId: conversationId,
         price: parseFloat(price).toFixed(2),
         paidPrice: parseFloat(paidPrice).toFixed(2),
-        currency: Iyzipay.CURRENCY.TRY, // Değişiklik burada
+        currency: Iyzipay.CURRENCY.TRY, // Paketin kendisini kullanıyoruz
         installments: '1',
         basketId: `basket-${userId}-${Date.now()}`,
-        paymentChannel: Iyzipay.PAYMENT_CHANNEL.WEB, // Değişiklik burada
-        paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT, // Değişiklik burada
+        paymentChannel: Iyzipay.PAYMENT_CHANNEL.WEB, // Paketin kendisini kullanıyoruz
+        paymentGroup: Iyzipay.PAYMENT_GROUP.PRODUCT, // Paketin kendisini kullanıyoruz
         paymentCard: paymentCard,
         buyer: buyer,
         shippingAddress: shippingAddress,
@@ -36,22 +37,19 @@ exports.createIyzicoPayment = functions.region('europe-west1').https.onCall(asyn
         basketItems: basketItems,
     };
 
-    try {
-        const result = await new Promise((resolve, reject) => {
-            iyzicoClient.payment.create(request, (err, result) => {
-                if (err) return reject(err);
+    return new Promise((resolve, reject) => {
+        // istemciyi kullanarak ödeme isteği yapıyoruz
+        iyzico.payment.create(request, (err, result) => {
+            if (err) {
+                console.error("Iyzico API Error:", err);
+                reject(new functions.https.HttpsError('internal', err.message || 'Ödeme sağlayıcısında bir hata oluştu.'));
+            } else if (result.status === 'success') {
+                console.log("Iyzico Payment Success:", result);
                 resolve(result);
-            });
+            } else {
+                console.error("Iyzico Payment Failure:", result);
+                reject(new functions.https.HttpsError('aborted', result.errorMessage || 'Ödeme başarısız oldu.'));
+            }
         });
-
-        if (result.status === 'success') {
-            return result;
-        } else {
-            throw new functions.https.HttpsError('aborted', result.errorMessage || 'Ödeme sırasında bir hata oluştu.');
-        }
-    } catch (error) {
-        console.error("Iyzico Payment Error:", error);
-        const errorMessage = error.message || 'Ödeme sunucusunda bir hata oluştu.';
-        throw new functions.https.HttpsError('internal', errorMessage);
-    }
+    });
 });
