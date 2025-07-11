@@ -159,122 +159,140 @@
 
 
     <script src="https://static.iyzipay.com/v1/iyzico.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp, writeBatch, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+   <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp, writeBatch, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    
+    const firebaseConfig = { apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA", authDomain: "esanscim.firebaseapp.com", projectId: "esanscim", storageBucket: "esanscim.firebasestorage.app", messagingSenderId: "570763360884", appId: "1:570763360884:web:47562ad20c047b9defaf21" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-        const firebaseConfig = { apiKey: "AIzaSyDOyX8bXweatlT-9uRI7t4poS-7oQKV2xA", authDomain: "esanscim.firebaseapp.com", projectId: "esanscim", storageBucket: "esanscim.firebasestorage.app", messagingSenderId: "570763360884", appId: "1:570763360884:web:47562ad20c047b9defaf21" };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const functions = getFunctions(app, 'europe-west1');
-        const createIyzicoPayment = httpsCallable(functions, 'createIyzicoPayment');
+    const pageContainer = document.getElementById('page-container');
+    const states = { loading: document.getElementById('loading-state'), authRequired: document.getElementById('auth-required-state'), emptyCart: document.getElementById('empty-cart-state'), cartContent: document.getElementById('cart-content') };
+    const cartItemsContainer = document.getElementById('cart-items-container');
+    const addressContainer = document.getElementById('address-container');
+    const shippingOptionsContainer = document.getElementById('shipping-options-container');
+    const summary = { subtotal: document.getElementById('summary-subtotal'), shipping: document.getElementById('summary-shipping'), total: document.getElementById('summary-total') };
+    const checkoutButton = document.getElementById('checkout-button');
+    const agreementCheckboxes = document.querySelectorAll('.agreement-checkbox');
+    const iyzicoForm = document.getElementById('iyzico-form');
+    const iyzicoPayButton = document.getElementById('iyzico-pay-button');
+    const paymentErrorMessage = document.getElementById('payment-error-message');
 
-        const pageContainer = document.getElementById('page-container');
-        const states = { loading: document.getElementById('loading-state'), authRequired: document.getElementById('auth-required-state'), emptyCart: document.getElementById('empty-cart-state'), cartContent: document.getElementById('cart-content') };
-        const cartItemsContainer = document.getElementById('cart-items-container');
-        const addressContainer = document.getElementById('address-container');
-        const shippingOptionsContainer = document.getElementById('shipping-options-container');
-        const summary = { subtotal: document.getElementById('summary-subtotal'), shipping: document.getElementById('summary-shipping'), total: document.getElementById('summary-total') };
-        const checkoutButton = document.getElementById('checkout-button');
-        const agreementCheckboxes = document.querySelectorAll('.agreement-checkbox');
-        const iyzicoForm = document.getElementById('iyzico-form');
-        const iyzicoPayButton = document.getElementById('iyzico-pay-button');
-        const paymentErrorMessage = document.getElementById('payment-error-message');
+    let cart = []; let currentUser = null; let userData = null; let activeShippingCarriers = []; let selectedShippingCarrier = null; let isAnyItemPendingQuotaForPayment = false;
 
-        let cart = []; let currentUser = null; let userData = null; let activeShippingCarriers = []; let selectedShippingCarrier = null; let isAnyItemPendingQuotaForPayment = false;
+    const getCart = () => { try { return JSON.parse(localStorage.getItem('esanscim_cart')) || []; } catch (e) { localStorage.removeItem('esanscim_cart'); return []; } };
+    const saveCart = (currentCart) => localStorage.setItem('esanscim_cart', JSON.stringify(currentCart));
+    const showState = (stateToShow) => { Object.values(states).forEach(state => state.style.display = 'none'); stateToShow.style.display = 'block'; };
+    
+    const updateQuantity = (itemId, change) => { const itemIndex = cart.findIndex(item => item.id === itemId); if (itemIndex > -1) { cart[itemIndex].quantity += change; if (cart[itemIndex].quantity <= 0) cart.splice(itemIndex, 1); saveCart(cart); renderPageContent(); } };
+    const removeItem = (itemId) => { cart = cart.filter(item => item.id !== itemId); saveCart(cart); renderPageContent(); };
 
-        const getCart = () => { try { return JSON.parse(localStorage.getItem('esanscim_cart')) || []; } catch (e) { localStorage.removeItem('esanscim_cart'); return []; } };
-        const saveCart = (currentCart) => localStorage.setItem('esanscim_cart', JSON.stringify(currentCart));
-        const showState = (stateToShow) => { Object.values(states).forEach(state => state.style.display = 'none'); stateToShow.style.display = 'block'; };
-        
-        const updateQuantity = (itemId, change) => { const itemIndex = cart.findIndex(item => item.id === itemId); if (itemIndex > -1) { cart[itemIndex].quantity += change; if (cart[itemIndex].quantity <= 0) cart.splice(itemIndex, 1); saveCart(cart); renderPageContent(); } };
-        const removeItem = (itemId) => { cart = cart.filter(item => item.id !== itemId); saveCart(cart); renderPageContent(); };
+    const renderCartItems = () => { cartItemsContainer.innerHTML = cart.map(item => `<div class="flex items-center py-4 border-b last:border-b-0"><img src="${item.imageUrl || './images/default-esans.png'}" alt="${item.name || 'Ürün'}" class="w-20 h-20 object-cover rounded-md mr-4"><div class="flex-grow"><p class="font-semibold">${item.name || 'Bilinmeyen Ürün'}</p><p class="text-sm text-gray-500">${item.gram || '?'}gr</p><p class="text-sm font-bold text-indigo-600">${(item.price || 0).toFixed(2)} TL</p></div><div class="flex items-center mx-4"><button class="quantity-btn h-8 w-8 text-lg rounded-full hover:bg-gray-200 transition-colors" data-id="${item.id}" data-change="-1">-</button><span class="w-12 text-center font-medium">${item.quantity || 1}</span><button class="quantity-btn h-8 w-8 text-lg rounded-full hover:bg-gray-200 transition-colors" data-id="${item.id}" data-change="1">+</button></div><button class="remove-btn text-gray-400 hover:text-red-500 text-2xl font-light w-8 h-8 flex items-center justify-center" data-id="${item.id}">×</button></div>`).join(''); document.querySelectorAll('.quantity-btn').forEach(btn => btn.onclick = (e) => updateQuantity(e.currentTarget.dataset.id, parseInt(e.currentTarget.dataset.change))); document.querySelectorAll('.remove-btn').forEach(btn => btn.onclick = (e) => removeItem(e.currentTarget.dataset.id)); };
+    
+    const updateCheckoutButtonState = () => { const isAddressAvailable = userData && userData.address && userData.address.trim() !== ''; const allAgreementsChecked = Array.from(document.querySelectorAll('.agreement-checkbox')).every(cb => cb.checked); checkoutButton.disabled = !allAgreementsChecked || !isAddressAvailable || !selectedShippingCarrier; };
 
-        const renderCartItems = () => { cartItemsContainer.innerHTML = cart.map(item => `<div class="flex items-center py-4 border-b last:border-b-0"><img src="${item.imageUrl || './images/default-esans.png'}" alt="${item.name || 'Ürün'}" class="w-20 h-20 object-cover rounded-md mr-4"><div class="flex-grow"><p class="font-semibold">${item.name || 'Bilinmeyen Ürün'}</p><p class="text-sm text-gray-500">${item.gram || '?'}gr</p><p class="text-sm font-bold text-indigo-600">${(item.price || 0).toFixed(2)} TL</p></div><div class="flex items-center mx-4"><button class="quantity-btn h-8 w-8 text-lg rounded-full hover:bg-gray-200 transition-colors" data-id="${item.id}" data-change="-1">-</button><span class="w-12 text-center font-medium">${item.quantity || 1}</span><button class="quantity-btn h-8 w-8 text-lg rounded-full hover:bg-gray-200 transition-colors" data-id="${item.id}" data-change="1">+</button></div><button class="remove-btn text-gray-400 hover:text-red-500 text-2xl font-light w-8 h-8 flex items-center justify-center" data-id="${item.id}">×</button></div>`).join(''); document.querySelectorAll('.quantity-btn').forEach(btn => btn.onclick = (e) => updateQuantity(e.currentTarget.dataset.id, parseInt(e.currentTarget.dataset.change))); document.querySelectorAll('.remove-btn').forEach(btn => btn.onclick = (e) => removeItem(e.currentTarget.dataset.id)); };
-        
-        const updateCheckoutButtonState = () => { const isAddressAvailable = userData && userData.address && userData.address.trim() !== ''; const allAgreementsChecked = Array.from(document.querySelectorAll('.agreement-checkbox')).every(cb => cb.checked); checkoutButton.disabled = !allAgreementsChecked || !isAddressAvailable || !selectedShippingCarrier; };
+    const handleShippingSelection = (event) => { selectedShippingCarrier = activeShippingCarriers.find(c => c.name === event.target.value) || null; renderSummary(); };
+    const renderAddress = () => { if (!userData?.address) { addressContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Teslimat Adresi</h2><p class="text-red-500 text-sm">Siparişe devam etmek için kayıtlı bir teslimat adresiniz olmalıdır.</p><a href="profile.html" class="mt-2 inline-block text-indigo-600 hover:underline text-sm font-semibold">Profil Sayfasından Adres Ekle →</a>`; } else { addressContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Teslimat Adresi</h2><div class="border rounded-md p-3 bg-gray-50"><p class="font-semibold text-sm">Kayıtlı Adresim</p><p class="text-gray-600 text-sm whitespace-pre-wrap">${userData.address}</p></div><div class="mt-4"><label class="flex items-center"><input type="checkbox" id="billing-same-as-shipping" checked class="h-4 w-4 text-indigo-600 border-gray-300 rounded"><span class="ml-2 text-sm text-gray-700">Fatura adresim, teslimat adresimle aynı.</span></label></div>`; } };
+    const renderShippingOptions = () => { if (activeShippingCarriers.length === 0) { shippingOptionsContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Kargo Seçimi</h2><p class="text-sm text-gray-500">Aktif kargo seçeneği bulunamadı.</p>`; selectedShippingCarrier = null; return; } shippingOptionsContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Kargo Seçimi</h2><div class="space-y-2">${activeShippingCarriers.map((carrier, index) => `<label class="flex items-center justify-between p-3 border rounded-md cursor-pointer hover:bg-gray-50"><div class="flex items-center"><input type="radio" name="shipping-carrier" value="${carrier.name}" id="carrier-${index}" class="h-4 w-4 text-indigo-600 border-gray-300"><span class="ml-3 text-sm font-medium text-gray-800">${carrier.name}</span></div><span class="text-sm font-semibold">${carrier.price.toFixed(2)} TL</span></label>`).join('')}</div>`; document.querySelectorAll('input[name="shipping-carrier"]').forEach(radio => radio.addEventListener('change', handleShippingSelection)); if (activeShippingCarriers.length === 1) { document.getElementById('carrier-0').checked = true; selectedShippingCarrier = activeShippingCarriers[0]; } };
+    const renderSummary = () => { const subtotal = cart.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0); const shippingCost = selectedShippingCarrier ? selectedShippingCarrier.price : 0; const total = subtotal + shippingCost; summary.subtotal.textContent = `${subtotal.toFixed(2)} TL`; summary.shipping.textContent = selectedShippingCarrier ? `${shippingCost.toFixed(2)} TL` : 'Kargo Seçin'; summary.total.textContent = `${total.toFixed(2)} TL`; updateCheckoutButtonState(); };
+    const renderPageContent = async () => { cart = getCart(); if (cart.length > 0) { renderCartItems(); renderAddress(); await fetchShippingOptions(); renderShippingOptions(); renderSummary(); showState(states.cartContent); } else { showState(states.emptyCart); } };
+    const fetchShippingOptions = async () => { const docRef = doc(db, "settings", "shippingOptions"); const docSnap = await getDoc(docRef); if (docSnap.exists()) { activeShippingCarriers = (docSnap.data().carriers || []).filter(c => c.active); } else { activeShippingCarriers = []; } };
+    
+    const handleCheckout = async () => {
+        checkoutButton.disabled = true;
+        checkoutButton.textContent = 'Kontrol Ediliyor...';
+        let quotaWarningMessage = '';
+        isAnyItemPendingQuotaForPayment = false;
+        const productDocsPromises = cart.map(item => getDoc(doc(db, "products", item.productId)));
+        const productDocs = await Promise.all(productDocsPromises);
+        for (let i = 0; i < cart.length; i++) {
+            const productData = productDocs[i].data();
+            if (productData && productData.quota > (productData.totalDemand || 0)) {
+                isAnyItemPendingQuotaForPayment = true;
+                quotaWarningMessage += `- ${productData.name}\n`;
+            }
+        }
+        if(isAnyItemPendingQuotaForPayment){
+            const proceed = confirm(`UYARI:\n\nAşağıdaki ürün(ler) henüz minimum sipariş kotasına ulaşmamıştır. Siparişiniz, ürün(ler) kotayı doldurduğunda işleme alınacaktır:\n\n${quotaWarningMessage}\nDevam etmek istiyor musunuz?`);
+            if (!proceed) {
+                checkoutButton.disabled = false;
+                checkoutButton.textContent = 'Ödemeye Geç';
+                return;
+            }
+        }
+        checkoutButton.style.display = 'none';
+        iyzicoForm.classList.remove('max-h-0', 'opacity-0');
+        iyzicoForm.classList.add('max-h-[500px]', 'opacity-100');
+    };
 
-        const handleShippingSelection = (event) => { selectedShippingCarrier = activeShippingCarriers.find(c => c.name === event.target.value) || null; renderSummary(); };
-        const renderAddress = () => { if (!userData?.address) { addressContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Teslimat Adresi</h2><p class="text-red-500 text-sm">Siparişe devam etmek için kayıtlı bir teslimat adresiniz olmalıdır.</p><a href="profile.html" class="mt-2 inline-block text-indigo-600 hover:underline text-sm font-semibold">Profil Sayfasından Adres Ekle →</a>`; } else { addressContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Teslimat Adresi</h2><div class="border rounded-md p-3 bg-gray-50"><p class="font-semibold text-sm">Kayıtlı Adresim</p><p class="text-gray-600 text-sm whitespace-pre-wrap">${userData.address}</p></div><div class="mt-4"><label class="flex items-center"><input type="checkbox" id="billing-same-as-shipping" checked class="h-4 w-4 text-indigo-600 border-gray-300 rounded"><span class="ml-2 text-sm text-gray-700">Fatura adresim, teslimat adresimle aynı.</span></label></div>`; } };
-        const renderShippingOptions = () => { if (activeShippingCarriers.length === 0) { shippingOptionsContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Kargo Seçimi</h2><p class="text-sm text-gray-500">Aktif kargo seçeneği bulunamadı.</p>`; selectedShippingCarrier = null; return; } shippingOptionsContainer.innerHTML = `<h2 class="text-xl font-bold mb-4">Kargo Seçimi</h2><div class="space-y-2">${activeShippingCarriers.map((carrier, index) => `<label class="flex items-center justify-between p-3 border rounded-md cursor-pointer hover:bg-gray-50"><div class="flex items-center"><input type="radio" name="shipping-carrier" value="${carrier.name}" id="carrier-${index}" class="h-4 w-4 text-indigo-600 border-gray-300"><span class="ml-3 text-sm font-medium text-gray-800">${carrier.name}</span></div><span class="text-sm font-semibold">${carrier.price.toFixed(2)} TL</span></label>`).join('')}</div>`; document.querySelectorAll('input[name="shipping-carrier"]').forEach(radio => radio.addEventListener('change', handleShippingSelection)); if (activeShippingCarriers.length === 1) { document.getElementById('carrier-0').checked = true; selectedShippingCarrier = activeShippingCarriers[0]; } };
-        const renderSummary = () => { const subtotal = cart.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0); const shippingCost = selectedShippingCarrier ? selectedShippingCarrier.price : 0; const total = subtotal + shippingCost; summary.subtotal.textContent = `${subtotal.toFixed(2)} TL`; summary.shipping.textContent = selectedShippingCarrier ? `${shippingCost.toFixed(2)} TL` : 'Kargo Seçin'; summary.total.textContent = `${total.toFixed(2)} TL`; updateCheckoutButtonState(); };
-        const renderPageContent = async () => { cart = getCart(); if (cart.length > 0) { renderCartItems(); renderAddress(); await fetchShippingOptions(); renderShippingOptions(); renderSummary(); showState(states.cartContent); } else { showState(states.emptyCart); } };
-        const fetchShippingOptions = async () => { const docRef = doc(db, "settings", "shippingOptions"); const docSnap = await getDoc(docRef); if (docSnap.exists()) { activeShippingCarriers = (docSnap.data().carriers || []).filter(c => c.active); } else { activeShippingCarriers = []; } };
-        
-        const handleCheckout = async () => {
-            checkoutButton.disabled = true;
-            checkoutButton.textContent = 'Kontrol Ediliyor...';
-            let quotaWarningMessage = '';
-            isAnyItemPendingQuotaForPayment = false;
-            const productDocsPromises = cart.map(item => getDoc(doc(db, "products", item.productId)));
-            const productDocs = await Promise.all(productDocsPromises);
+    const finalizeOrder = async (isPending) => {
+        const subtotal = cart.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
+        const shippingCost = selectedShippingCarrier.price;
+        try {
+            const batch = writeBatch(db);
+            const orderRef = doc(collection(db, "orders"));
+            batch.set(orderRef, { userId: currentUser.uid, customerInfo: { name: userData.name, email: userData.email, phone: userData.phone || null }, shippingAddress: userData.address, shippingCarrier: { name: selectedShippingCarrier.name, price: selectedShippingCarrier.price }, items: cart, subtotalAmount: subtotal, shippingAmount: shippingCost, totalAmount: subtotal + shippingCost, status: isPending ? 'Kota Bekleniyor' : 'Yeni Sipariş', createdAt: serverTimestamp() });
             for (let i = 0; i < cart.length; i++) {
-                const productData = productDocs[i].data();
-                if (productData && productData.quota > (productData.totalDemand || 0)) {
-                    isAnyItemPendingQuotaForPayment = true;
-                    quotaWarningMessage += `- ${productData.name}\n`;
-                }
+                const item = cart[i]; const productRef = doc(db, "products", item.productId); const totalGramOrdered = item.gram * item.quantity; batch.update(productRef, { totalDemand: increment(totalGramOrdered), buyers: arrayUnion({ userId: currentUser.uid, userCode: userData.userCode || currentUser.uid.substring(0,6).toUpperCase(), timestamp: serverTimestamp() }) });
             }
-            if(isAnyItemPendingQuotaForPayment){
-                const proceed = confirm(`UYARI:\n\nAşağıdaki ürün(ler) henüz minimum sipariş kotasına ulaşmamıştır. Siparişiniz, ürün(ler) kotayı doldurduğunda işleme alınacaktır:\n\n${quotaWarningMessage}\nDevam etmek istiyor musunuz?`);
-                if (!proceed) {
-                    checkoutButton.disabled = false;
-                    checkoutButton.textContent = 'Ödemeye Geç';
-                    return;
-                }
-            }
-            checkoutButton.style.display = 'none';
-            iyzicoForm.classList.remove('max-h-0', 'opacity-0');
-            iyzicoForm.classList.add('max-h-[500px]', 'opacity-100');
+            await batch.commit();
+            localStorage.removeItem('esanscim_cart');
+            alert('Ödeme başarılı! Siparişiniz oluşturuldu.');
+            window.location.href = 'profile.html';
+         } catch (error) {
+            console.error("Sipariş oluşturma hatası:", error);
+            paymentErrorMessage.textContent = 'Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.';
+            iyzicoPayButton.disabled = false; iyzicoPayButton.textContent = 'Güvenli Ödeme Yap';
+         }
+    };
+    
+    onAuthStateChanged(auth, async (user) => { try { if (user) { currentUser = user; const userDoc = await getDoc(doc(db, "users", user.uid)); userData = userDoc.exists() ? userDoc.data() : { name: user.displayName, email: user.email }; await renderPageContent(); } else { currentUser = null; userData = null; showState(states.authRequired); } } catch (error) { console.error("Sepet sayfası yüklenirken hata oluştu:", error); pageContainer.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-md text-center max-w-2xl mx-auto"><h2 class="text-2xl font-bold text-red-600 mb-4">Bir Hata Oluştu</h2><p class="text-gray-600 mb-6">Sayfa yüklenirken beklenmedik bir sorun oluştu.</p></div>`; } });
+    
+    document.querySelectorAll('.agreement-checkbox').forEach(checkbox => checkbox.addEventListener('change', updateCheckoutButtonState));
+    checkoutButton.addEventListener('click', handleCheckout);
+    
+    iyzicoPayButton.addEventListener('click', async () => {
+        iyzicoPayButton.disabled = true; iyzicoPayButton.textContent = 'İşleniyor...'; paymentErrorMessage.textContent = '';
+        const expiry = document.getElementById('card-expiry').value.split('/');
+        const subtotal = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
+        const paymentData = {
+            paymentCard: { cardHolderName: document.getElementById('card-holder-name').value, cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''), expireYear: `20${expiry[1]}`, expireMonth: expiry[0], cvc: document.getElementById('card-cvc').value },
+            buyer: { id: currentUser.uid, name: userData.name.split(' ')[0], surname: userData.name.split(' ').slice(1).join(' ') || 'N/A', gsmNumber: userData.phone || '+905555555555', email: userData.email, identityNumber: '11111111111', lastLoginDate: new Date().toISOString().slice(0, 19).replace('T', ' '), registrationDate: currentUser.metadata.creationTime.slice(0, 19).replace('T', ' '), registrationAddress: userData.address, ip: '85.34.78.112', city: 'Istanbul', country: 'Turkey', zipCode: '34732' },
+            shippingAddress: { contactName: userData.name, city: 'Istanbul', country: 'Turkey', address: userData.address, zipCode: '34732' },
+            billingAddress: { contactName: userData.name, city: 'Istanbul', country: 'Turkey', address: userData.address, zipCode: '34732' },
+            basketItems: cart.map(item => ({ id: item.productId, name: item.name, category1: item.category || 'Esans', price: (item.price * item.quantity).toFixed(2), itemType: 'PHYSICAL' })),
+            price: subtotal.toFixed(2),
+            paidPrice: (subtotal + selectedShippingCarrier.price).toFixed(2),
         };
 
-        const finalizeOrder = async (isPending) => {
-            const subtotal = cart.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
-            const shippingCost = selectedShippingCarrier.price;
-            try {
-                const batch = writeBatch(db);
-                const orderRef = doc(collection(db, "orders"));
-                batch.set(orderRef, { userId: currentUser.uid, customerInfo: { name: userData.name, email: userData.email, phone: userData.phone || null }, shippingAddress: userData.address, shippingCarrier: { name: selectedShippingCarrier.name, price: selectedShippingCarrier.price }, items: cart, subtotalAmount: subtotal, shippingAmount: shippingCost, totalAmount: subtotal + shippingCost, status: isPending ? 'Kota Bekleniyor' : 'Yeni Sipariş', createdAt: serverTimestamp() });
-                for (let i = 0; i < cart.length; i++) {
-                    const item = cart[i]; const productRef = doc(db, "products", item.productId); const totalGramOrdered = item.gram * item.quantity; batch.update(productRef, { totalDemand: increment(totalGramOrdered), buyers: arrayUnion({ userId: currentUser.uid, userCode: userData.userCode || currentUser.uid.substring(0,6).toUpperCase(), timestamp: serverTimestamp() }) });
-                }
-                await batch.commit();
-                localStorage.removeItem('esanscim_cart');
-                alert('Ödeme başarılı! Siparişiniz oluşturuldu.');
-                window.location.href = 'profile.html';
-             } catch (error) {
-                console.error("Sipariş oluşturma hatası:", error);
-                paymentErrorMessage.textContent = 'Sipariş oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.';
-                iyzicoPayButton.disabled = false; iyzicoPayButton.textContent = 'Güvenli Ödeme Yap';
-             }
-        };
-        
-        onAuthStateChanged(auth, async (user) => { try { if (user) { currentUser = user; const userDoc = await getDoc(doc(db, "users", user.uid)); userData = userDoc.exists() ? userDoc.data() : { name: user.displayName, email: user.email }; await renderPageContent(); } else { currentUser = null; userData = null; showState(states.authRequired); } } catch (error) { console.error("Sepet sayfası yüklenirken hata oluştu:", error); pageContainer.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-md text-center max-w-2xl mx-auto"><h2 class="text-2xl font-bold text-red-600 mb-4">Bir Hata Oluştu</h2><p class="text-gray-600 mb-6">Sayfa yüklenirken beklenmedik bir sorun oluştu.</p></div>`; } });
-        
-        document.querySelectorAll('.agreement-checkbox').forEach(checkbox => checkbox.addEventListener('change', updateCheckoutButtonState));
-        checkoutButton.addEventListener('click', handleCheckout);
-        
-        iyzicoPayButton.addEventListener('click', async () => {
-            iyzicoPayButton.disabled = true; iyzicoPayButton.textContent = 'İşleniyor...'; paymentErrorMessage.textContent = '';
-            const expiry = document.getElementById('card-expiry').value.split('/');
-            const subtotal = cart.reduce((s, i) => s + (i.price * i.quantity), 0);
-            const paymentData = {
-                paymentCard: { cardHolderName: document.getElementById('card-holder-name').value, cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''), expireYear: `20${expiry[1]}`, expireMonth: expiry[0], cvc: document.getElementById('card-cvc').value },
-                buyer: { id: currentUser.uid, name: userData.name.split(' ')[0], surname: userData.name.split(' ').slice(1).join(' ') || 'N/A', gsmNumber: userData.phone || '+905555555555', email: userData.email, identityNumber: '11111111111', lastLoginDate: new Date().toISOString().slice(0, 19).replace('T', ' '), registrationDate: currentUser.metadata.creationTime.slice(0, 19).replace('T', ' '), registrationAddress: userData.address, ip: '85.34.78.112', city: 'Istanbul', country: 'Turkey', zipCode: '34732' },
-                shippingAddress: { contactName: userData.name, city: 'Istanbul', country: 'Turkey', address: userData.address, zipCode: '34732' },
-                billingAddress: { contactName: userData.name, city: 'Istanbul', country: 'Turkey', address: userData.address, zipCode: '34732' },
-                basketItems: cart.map(item => ({ id: item.productId, name: item.name, category1: item.category || 'Esans', price: (item.price * item.quantity).toFixed(2), itemType: 'PHYSICAL' })),
-                price: subtotal.toFixed(2),
-                paidPrice: (subtotal + selectedShippingCarrier.price).toFixed(2),
-            };
-            try {
-                const result = await createIyzicoPayment(paymentData);
-                if (result.data.status === 'success') { await finalizeOrder(isAnyItemPendingQuotaForPayment); } else { throw new Error(result.data.errorMessage || 'Ödeme başarısız.'); }
-            } catch (error) { console.error("Iyzico ödeme hatası:", error); paymentErrorMessage.textContent = error.message || 'Ödeme alınamadı. Kart bilgilerinizi kontrol edin.'; iyzicoPayButton.disabled = false; iyzicoPayButton.textContent = 'Güvenli Ödeme Yap'; }
-        });
-    </script>
+        const paymentFunctionUrl = 'https://europe-west1-esanscim.cloudfunctions.net/createIyzicoPayment';
+
+        try {
+            const response = await fetch(paymentFunctionUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(paymentData),
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.status === 'success') {
+                await finalizeOrder(isAnyItemPendingQuotaForPayment);
+            } else {
+                throw new Error(result.errorMessage || 'Ödeme başarısız.');
+            }
+        } catch (error) {
+            console.error("Iyzico ödeme hatası:", error);
+            paymentErrorMessage.textContent = error.message || 'Ödeme alınamadı. Kart bilgilerinizi kontrol edin.';
+            iyzicoPayButton.disabled = false;
+            iyzicoPayButton.textContent = 'Güvenli Ödeme Yap';
+        }
+    });
+</script>
 </body>
 </html>
