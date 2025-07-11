@@ -60,9 +60,7 @@ exports.createIyzicoPayment = functions.region('europe-west1').https.onCall(asyn
       const productData = doc.data();
       const itemQuantity = basketItems[index].quantity;
       const gramaj = basketItems[index].gram;
-      
       const calculatedPrice = (parseFloat(productData.unitPrice) / 50) * gramaj;
-      
       subtotal += calculatedPrice * itemQuantity;
 
       return {
@@ -102,13 +100,11 @@ exports.createIyzicoPayment = functions.region('europe-west1').https.onCall(asyn
       iyzico.payment.create(request, (err, res) => err ? reject(err) : resolve(res));
     });
 
+    // En kritik düzeltme: Dönen cevabı sadeleştiriyoruz.
     if (result.status === 'success') {
-      // HATA BURADAYDI! Iyzico'dan gelen tüm objeyi değil, sadece
-      // gerekli bilgileri içeren sade bir obje geri döndürüyoruz.
       return { 
         status: result.status, 
         paymentId: result.paymentId,
-        price: result.price,
       };
     } else {
       throw new functions.https.HttpsError('aborted', result.errorMessage || 'Ödeme sağlayıcısı tarafından reddedildi.');
